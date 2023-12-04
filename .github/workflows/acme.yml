@@ -52,6 +52,11 @@ jobs:
           echo '// tmpdir'
           ls -laR "${{ runner.temp }}" >> "${LOG_DIR}/myacmelog"
 
+      - name: Print myacmelog
+        run: |
+          echo 'LeavePre, cat log in LOG_DIR'
+          cat "${LOG_DIR}/myacmelog"
+
       - name: Quit
         run: |
           echo -n '-- bye,'
