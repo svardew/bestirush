@@ -1,0 +1,59 @@
+name: ACME, do some work
+
+on:
+  push:
+    branches: ['acme']
+  workflow_dispatch:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  tryubuntu:
+    runs-on: ubuntu-22.04
+
+    env:
+      ACMEDESC: noop.modified.vim.ci.yml
+      SRCDIR: ./src
+      LEAK_CFLAGS: -DEXITFREE
+      LOG_DIR: ${{ github.workspace }}/logs
+      TERM: xterm
+      DISPLAY: ':99'
+      DEBIAN_FRONTEND: noninteractive
+
+    steps:
+      - name: Set up environment
+        run: |
+          mkdir -p "${LOG_DIR}"
+          mkdir -p "${HOME}/bin"
+          echo "${HOME}/bin" >> $GITHUB_PATH
+          echo "LINUX_VERSION=$(uname -r)"
+          # echo "NPROC=$(getconf _NPROCESSORS_ONLN)"
+          echo "TMPDIR=${{ runner.temp }}"
+
+      - name: Check version
+        run: |
+          uname -a
+          LC_ALL=C /bin/bash --version
+
+      - name: Test
+        timeout-minutes: 25
+        run: |
+          echo '//--running steps.Test'
+          touch "${LOG_DIR}/myacmelog"
+          date +'Test at %x %X.' >> "${LOG_DIR}/myacmelog"
+          whoami
+          env | tee -a "${LOG_DIR}/myacmelog"
+          echo '$ ls -la for [LOG_DiR][HOME][TMPDIR]'
+          echo '// log_dir'
+          ls -la "${LOG_DIR}" >> "${LOG_DIR}/myacmelog"
+          echo '// home'
+          ls -laR "${HOME}" >> "${LOG_DIR}/myacmelog"
+          echo '// tmpdir'
+          ls -laR "${{ runner.temp }}" >> "${LOG_DIR}/myacmelog"
+
+      - name: Quit
+        run: |
+          echo -n '-- bye,'
+          echo 'bye.'
+
