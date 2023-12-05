@@ -35,9 +35,7 @@ jobs:
           echo "LINUX_VERSION=$(uname -r)"
           # echo "NPROC=$(getconf _NPROCESSORS_ONLN)"
           echo "TMPDIR=${{ runner.temp }}"
-          echo "env acmestr: [${ACMESTR}], from gh-cli --field options"
-        env: |
-          ACMESTR: ${{ github.event.inputs.acmestr }}
+          echo "env acmestr: [${{ github.event.inputs.acmestr }}], from gh-cli --field options"
 
       - name: Check version
         run: |
