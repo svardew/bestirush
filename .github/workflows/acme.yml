@@ -30,6 +30,7 @@ jobs:
           echo "LINUX_VERSION=$(uname -r)"
           # echo "NPROC=$(getconf _NPROCESSORS_ONLN)"
           echo "TMPDIR=${{ runner.temp }}"
+          echo "env acmestr: ["${{ env.ACMESTR }}"]"
 
       - name: Check version
         run: |
