@@ -1,0 +1,231 @@
+name: ACME, build vim linux-gcc-huge-gui-dynamic-uchar
+
+on:
+  push:
+    branches: ['acme']
+  workflow_dispatch:
+
+# Cancels all previous workflow runs for pull requests that have not completed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+
+    env:
+      CC: ${{ matrix.compiler }}
+      GCC_VER: 13
+      CLANG_VER: 17
+      TEST: test
+      SRCDIR: ./src
+      LEAK_CFLAGS: -DEXITFREE
+      LOG_DIR: ${{ github.workspace }}/logs
+      TERM: xterm
+      DISPLAY: ':99'
+      DEBIAN_FRONTEND: noninteractive
+
+    strategy:
+      fail-fast: false
+      matrix:
+        features: [huge]
+        compiler: [gcc]
+        extra: [[]]
+        architecture: [native]
+        include:
+          - features: huge
+            compiler: gcc
+            coverage: false
+            interface: dynamic
+            extra: [uchar, testgui]
+          # - features: huge
+          #   compiler: gcc
+          #   coverage: true
+          #   extra: [unittests]
+
+    steps:
+      - name: acme hello
+        run: |
+          echo -n 'hello, '
+          echo 'do some work.'
+
+      - name: Checkout repository from github
+        uses: actions/checkout@v4
+        with:
+          repository: svardew/vim
+          # ref: v9.0.2138
+          ref: fda700cb04612fe2f9301a9ba820309175decabf
+          path: .
+
+      - name: Install packages
+        run: |
+          PKGS=( \
+            gettext \
+            libgtk2.0-dev:${{ matrix.architecture }} \
+            desktop-file-utils \
+            libtool-bin \
+            libncurses-dev:${{ matrix.architecture }} \
+            libxt-dev:${{ matrix.architecture }} \
+          )
+          if ${{ matrix.features == 'huge' }}; then
+            LUA_VER=${{ matrix.lua_ver || '5.4' }}
+            PKGS+=( \
+              autoconf \
+              gdb \
+              lcov \
+              libcanberra-dev \
+              libperl-dev \
+              python2-dev \
+              python3-dev \
+              liblua${LUA_VER}-dev \
+              lua${LUA_VER} \
+              ruby-dev \
+              tcl-dev \
+              cscope \
+              libsodium-dev \
+              attr \
+              libattr1-dev
+            )
+          fi
+          sudo apt-get update && sudo apt-get install -y "${PKGS[@]}"
+
+      - name: Install gcc-${{ env.GCC_VER }}
+        if:  matrix.compiler == 'gcc'
+        run: |
+          sudo apt-get install -y gcc-${{ env.GCC_VER }}:${{ matrix.architecture }}
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ env.GCC_VER }} 100
+          sudo update-alternatives --set gcc /usr/bin/gcc-${{ env.GCC_VER }}
+
+      - name: Set up environment
+        run: |
+          mkdir -p "${LOG_DIR}"
+          mkdir -p "${HOME}/bin"
+          echo "${HOME}/bin" >> $GITHUB_PATH
+          (
+          echo "LINUX_VERSION=$(uname -r)"
+          echo "NPROC=$(getconf _NPROCESSORS_ONLN)"
+          echo "TMPDIR=${{ runner.temp }}"
+
+          case "${{ matrix.features }}" in
+          huge)
+            echo "TEST=scripttests test_libvterm"
+            INTERFACE=${{ matrix.interface || 'yes' }}
+            if ${{ matrix.python3 == 'stable-abi' }}; then
+              PYTHON3_CONFOPT="--with-python3-stable-abi=3.8"
+            fi
+            echo "CONFOPT=--enable-perlinterp=${INTERFACE} --enable-pythoninterp=${INTERFACE} --enable-python3interp=${INTERFACE} --enable-rubyinterp=${INTERFACE} --enable-luainterp=${INTERFACE} --enable-tclinterp=${INTERFACE} ${PYTHON3_CONFOPT}"
+            ;;
+          esac
+
+          # if ${{ matrix.coverage == true }}; then
+          #   CFLAGS="${CFLAGS} --coverage -DUSE_GCOV_FLUSH"
+          #   echo "LDFLAGS=--coverage"
+          # fi
+          if ${{ contains(matrix.extra, 'uchar') }}; then
+            CFLAGS="${CFLAGS} -funsigned-char"
+          fi
+          if ${{ contains(matrix.extra, 'testgui') }}; then
+            echo "TEST=-C src testgui"
+          fi
+          if ${{ contains(matrix.extra, 'unittests') }}; then
+            echo "TEST=unittests"
+          fi
+          if ${{ contains(matrix.extra, 'asan') }}; then
+            echo "SANITIZER_CFLAGS=-g -O1 -DABORT_ON_INTERNAL_ERROR -DEXITFREE -fsanitize-recover=all -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer"
+            echo "ASAN_OPTIONS=print_stacktrace=1 log_path=${LOG_DIR}/asan"
+            echo "UBSAN_OPTIONS=print_stacktrace=1 log_path=${LOG_DIR}/ubsan"
+            echo "LSAN_OPTIONS=suppressions=${GITHUB_WORKSPACE}/src/testdir/lsan-suppress.txt"
+          fi
+          # if ${{ contains(matrix.extra, 'vimtags') }}; then
+          #   echo "TEST=-C runtime/doc vimtags VIMEXE=../../${SRCDIR}/vim"
+          # fi
+          echo "CFLAGS=${CFLAGS}"
+          ) >> $GITHUB_ENV
+
+      - name: Set up system
+        run: |
+          # if [[ ${CC} = clang ]]; then
+          #   # Use llvm-cov instead of gcov when compiler is clang.
+          #   ln -fs /usr/bin/llvm-cov ${HOME}/bin/gcov
+          # fi
+          sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
+          sudo usermod -a -G audio "${USER}"
+          sudo bash ci/setup-xvfb.sh
+
+      - name: Set up snd-dummy
+        if: (!(contains(matrix.extra, 'unittests') || contains(matrix.extra, 'vimtags')))
+        env:
+          DEST_DIR: ${{ env.TMPDIR }}/linux-modules-extra-${{ env.LINUX_VERSION }}
+        uses: tecolicom/actions-use-apt-tools@main
+        with:
+          tools: linux-modules-extra-${{ env.LINUX_VERSION }}
+          path: "${DEST_DIR}"
+
+      - name: modprobe snd-dummy
+        if: (!(contains(matrix.extra, 'unittests') || contains(matrix.extra, 'vimtags')))
+        run: |
+          sudo depmod --verbose
+          sudo modprobe --verbose snd-dummy || true
+
+      - name: Check autoconf
+        if: contains(matrix.extra, 'unittests')
+        run: |
+          make -C src autoconf
+
+#       - name: Set up shadow dir
+#         if: matrix.shadow
+#         run: |
+#           make -C src shadow
+#           echo "SRCDIR=${{ matrix.shadow }}" >> $GITHUB_ENV
+#           echo "SHADOWOPT=-C ${{ matrix.shadow }}" >> $GITHUB_ENV
+
+      - name: Configure
+        run: |
+          ./configure --with-features=${{ matrix.features }} ${CONFOPT} --enable-fail-if-missing
+          # Append various warning flags to CFLAGS.
+          sed -i -f ci/config.mk.sed ${SRCDIR}/auto/config.mk
+          sed -i -f ci/config.mk.${CC}.sed ${SRCDIR}/auto/config.mk
+          # if [[ ${CC} = clang ]]; then
+          #   # Suppress some warnings produced by clang 12 and later.
+          #   sed -i -f ci/config.mk.clang-12.sed ${SRCDIR}/auto/config.mk
+          # fi
+
+      - name: Build
+        if: (!contains(matrix.extra, 'unittests'))
+        run: |
+          make ${SHADOWOPT} -j${NPROC}
+
+      - name: Check version
+        if: (!contains(matrix.extra, 'unittests'))
+        run: |
+          "${SRCDIR}"/vim --version
+          "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-1.vim -c quit
+          "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-2.vim -c quit
+
+#-TODO-test-only-specific-test-#       - name: Test
+#-TODO-test-only-specific-test-#         timeout-minutes: 25
+#-TODO-test-only-specific-test-#         run: |
+#-TODO-test-only-specific-test-#           do_test() { sg audio "sg $(id -gn) '$*'"; }
+#-TODO-test-only-specific-test-#           do_test make ${SHADOWOPT} ${TEST}
+
+      - name: acme runtest test_terminal
+        timeout-minutes: 7
+        run: |
+          echo 'runtest Test_terminal_resize{,2}()...'
+          cd "${SRCDIR}"/testdir
+          make test_terminal2.res
+          if [ -f messages ];then cat messages;fi
+
+      # - name: Vim tags
+      # - name: Generate gcov files
+      # - name: Codecov
+      # - name: ASan logs
+
+      - name: acme bye
+        run: |
+          echo -n 'bye, '
+          echo 'done some work.'
