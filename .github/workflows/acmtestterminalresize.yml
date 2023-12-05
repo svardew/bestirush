@@ -1,4 +1,4 @@
-name: ACME, build vim linux-gcc-huge-gui-dynamic-uchar
+name: ACME, test_terminal2 on linux-gcc-huge-gui-dynamic-uchar
 
 on:
   push:
