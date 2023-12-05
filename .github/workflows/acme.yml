@@ -4,6 +4,11 @@ on:
   push:
     branches: ['acme']
   workflow_dispatch:
+    inputs:
+      acmestr:
+        type: string
+        required: false
+        description: 'some text data'
 
 permissions:
   contents: read # to fetch code (actions/checkout)
