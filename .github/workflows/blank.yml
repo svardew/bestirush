@@ -1,0 +1,46 @@
+# This is a basic workflow to help you get started with Actions
+
+name: manually CI
+
+on:
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    runs-on: ubuntu-22.04
+    env:
+      GCC_VER: 13
+      TEST: test
+      LEAK_CFLAGS: -DEXITFREE
+      TERM: xterm
+      DISPLAY: ':99'
+      DEBIAN_FRONTEND: noninteractive
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+        with:
+          repository: svardew/vim
+          # ref; v9.0.2138 fda700cb04612fe2f9301a9ba820309175decabf
+          ref: fda700cb0461
+          path: .
+
+      # Runs a single command using the runners shell
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+      # Runs a set of commands using the runners shell
+      - name: Run a multi-line script
+        run: |
+          echo Add other actions to build,
+          echo test, and deploy your project.
+      
+      - name: Check repo version
+        run: |
+          echo 'print CWD, patch-number, git-log'
+          grep -F -A2 'Add new patch number below this line' ./src/version.c | tail -n1 | sed 's/[^0-9]//g'
+          git log -1 --oneline
+
