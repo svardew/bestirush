@@ -24,8 +24,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: svardew/vim
-          # ref; v9.0.2138 fda700cb04612fe2f9301a9ba820309175decabf
-          ref: fda700cb0461
+          # ref; v9.0.2138 
+          ref: fda700cb04612fe2f9301a9ba820309175decabf
+          # ref: fda700cb0461 !short sha-1 not allowed
           path: .
 
       # Runs a single command using the runners shell
