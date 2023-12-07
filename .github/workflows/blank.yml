@@ -41,7 +41,10 @@ jobs:
       
       - name: Check repo version
         run: |
-          echo 'print CWD, patch-number, git-log'
+          echo 'print CWD, patch-number, git-log, configure-help'
+          echo "[CWD]: $GITHUB_WORKSPACE"
           grep -F -A2 'Add new patch number below this line' ./src/version.c | tail -n1 | sed 's/[^0-9]//g'
           git log -1 --oneline
+          ./configure --help
+          
 
