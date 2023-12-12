@@ -59,6 +59,8 @@ jobs:
 
       - name: test ruby on vim
         run: |
+          echo '// 0. export LD_LIBRARY_PATH for ruby'
+          export LD_LIBRARY_PATH=$(ruby -rrbconfig -e 'print RbConfig.expand(RbConfig::MAKEFILE_CONFIG["bindir"]')
           echo '// 1. test fail for NoMethodError format'
           make testclean
           cd src/testdir
