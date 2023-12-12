@@ -14,8 +14,10 @@ jobs:
       - name: begin
         run: echo '--- start [testruby] job. hello,,,'
 
-      - name: 'setup ruby'
+      - name: 'use actions/checkout'
         uses: actions/checkout@v4
+
+      - name: 'setup ruby'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 'ruby-3.3.0-rc1'
