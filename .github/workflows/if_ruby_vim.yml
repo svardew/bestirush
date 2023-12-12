@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: begin
-        run: echo '--- start [testruby] job. hello,,,'
+        run: echo '--- start [testruby] job. hello,,, ' $PWD
 
 
       - name: Checkout repository from github
@@ -39,14 +39,24 @@ jobs:
           echo '// expect [b9138194ffe9e7c8bb6d79d1ed56259553d18d9cb60b66e3ba5aa2e5b078055a]'
           ruby -rdigest/sha2 -e 'puts Digest::SHA256.hexdigest(%q[ruby])'
           echo '// display Rbconfig::CONFIG'
-          ruby -e 'p RbConfig::CONFIG'
+          ruby -e 'pp RbConfig::CONFIG'
+
+      - name: configure, build, version check vim
+        run: |
+          ./configure --enable-gui=no --with-features=normal --enable-rubyinterp=dynamic
+          make
+          ./src/vim --version
+
+      - name: test vim
+        run:
+          cd src/testdir
+          make test_let.res
+
+      - name: test ruby on vim
+        run: |
+          echo 'test fail for NoMethodError format'
+          echo 'test fail for rb_ary_detransient'
 
       - name: close
-        run: echo '--- close [testruby] job. bye,,,'
-
-
-
-
-
-
+        run: echo '--- close [testruby] job. bye,,,' $PWD
 
