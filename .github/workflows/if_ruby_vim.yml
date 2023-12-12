@@ -51,11 +51,22 @@ jobs:
         run: |
           cd src/testdir
           make test_let.res
+          echo '// cat messages.'
+          cat messages
+          echo '// cat test.log'
+          cat test.log
 
       - name: test ruby on vim
         run: |
-          echo 'test fail for NoMethodError format'
-          echo 'test fail for rb_ary_detransient'
+          echo '// 1. test fail for NoMethodError format'
+          make testclean
+          cd src/testdir
+          make test_ruby.res TEST_FILTER=Test_ruby_Vim_buffer_get
+          echo '// cat messages.'
+          cat messages
+          echo '// cat test.log'
+          cat test.log
+          echo '// 2. test fail for rb_ary_detransient'
 
       - name: close
         run: echo '--- close [testruby] job. bye,,,' $PWD
