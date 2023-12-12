@@ -1,6 +1,8 @@
 name: ruby33-and-vim
 
 on:
+  push:
+    branches: ['acme']
   workflow_dispatch:
 
 permissions:
@@ -14,13 +16,19 @@ jobs:
       - name: begin
         run: echo '--- start [testruby] job. hello,,,'
 
-      - name: 'use actions/checkout'
-        uses: actions/checkout@v4
 
-      - name: 'setup ruby'
+      - name: Checkout repository from github
+        uses: actions/checkout@v4
+        with:
+          repository: svardew/vim
+          # ref: v9.0.2138
+          ref: fda700cb04612fe2f9301a9ba820309175decabf
+          path: .
+
+      - name: setup ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 'ruby-3.3.0-rc1'
+          ruby-version: ruby-3.3.0-rc1
         run: |
           echo '// ruby --version && which ruby'
           ruby -v
