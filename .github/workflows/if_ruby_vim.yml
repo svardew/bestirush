@@ -53,8 +53,9 @@ jobs:
           make test_let.res
           echo '// cat messages.'
           cat messages
-          echo '// cat test.log'
-          cat test.log
+          echo '// cat test_result.log'
+          if [ -f test_result.log ]; then cat test_result.log ; fi
+          echo '// expect 1 testfile, all Test suite pass.'
 
       - name: test ruby on vim
         run: |
