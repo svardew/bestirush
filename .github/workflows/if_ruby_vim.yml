@@ -29,6 +29,8 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ruby-3.3.0-rc1
+
+      - name: check setup-ruby stat
         run: |
           echo '// ruby --version && which ruby'
           ruby -v
