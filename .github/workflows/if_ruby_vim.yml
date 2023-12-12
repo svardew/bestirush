@@ -43,7 +43,7 @@ jobs:
 
       - name: configure, build, version check vim
         run: |
-          ./configure --enable-gui=no --with-features=normal --enable-rubyinterp=dynamic
+          ./configure --enable-gui=no --with-features=normal --enable-rubyinterp=yes
           make
           ./src/vim --version
 
@@ -59,9 +59,9 @@ jobs:
 
       - name: test ruby on vim
         run: |
-          echo '// 0. export LD_LIBRARY_PATH for ruby'
-          export LD_LIBRARY_PATH=$(ruby -rrbconfig -e 'print RbConfig.expand(RbConfig::MAKEFILE_CONFIG["bindir"])')
-          echo '// 1. test fail for NoMethodError format'
+          # echo '// 0. export LD_LIBRARY_PATH for ruby'
+          # export LD_LIBRARY_PATH=$(ruby -rrbconfig -e 'print RbConfig.expand(RbConfig::MAKEFILE_CONFIG["bindir"])')
+          # echo '// 1. test fail for NoMethodError format'
           make testclean
           cd src/testdir
           make test_ruby.res TEST_FILTER=Test_ruby_Vim_buffer_get
