@@ -48,7 +48,7 @@ jobs:
           ./src/vim --version
 
       - name: test vim
-        run:
+        run: |
           cd src/testdir
           make test_let.res
 
