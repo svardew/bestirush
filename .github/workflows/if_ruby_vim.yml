@@ -1,0 +1,40 @@
+name: ruby33-and-vim
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  testruby:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: begin
+        run: echo '--- start [testruby] job. hello,,,'
+
+      - name: 'setup ruby'
+        uses: actions/checkout@v4
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 'ruby-3.3.0-rc1'
+        run: |
+          echo '// ruby --version && which ruby'
+          ruby -v
+          which ruby
+          echo '// digest/sha256 for "ruby" string'
+          echo '// expect [b9138194ffe9e7c8bb6d79d1ed56259553d18d9cb60b66e3ba5aa2e5b078055a]'
+          ruby -rdigest/sha2 -e 'puts Digest::SHA256.hexdigest(%q[ruby])'
+          echo '// display Rbconfig::CONFIG'
+          ruby -e 'p RbConfig::CONFIG'
+
+      - name: close
+        run: echo '--- close [testruby] job. bye,,,'
+
+
+
+
+
+
+
