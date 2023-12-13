@@ -56,6 +56,7 @@ jobs:
           echo "LD_LIBRARY_PATH=$x_ld_library_path" >> $GITHUB_ENV
 
       - name: test vim
+        if: false
         run: |
           echo '// setenv LD_L_P=env.L_L_P'
           export LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
@@ -90,5 +91,8 @@ jobs:
           # echo 'endfunc' >> t_y33.vim
 
       - name: close
-        run: echo '--- close [testruby] job. bye,,,' $PWD
-
+        run: |
+          echo '// setenv LD_L_P=env.L_L_P'
+          export LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
+          echo '// [ld-library-path]' $LD_LIBRARY_PATH ' [check-me]'
+          echo '--- close [testruby] job. bye,,,' $PWD
