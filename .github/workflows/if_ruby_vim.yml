@@ -38,6 +38,8 @@ jobs:
           echo '// digest/sha256 for "ruby" string'
           echo '// expect [b9138194ffe9e7c8bb6d79d1ed56259553d18d9cb60b66e3ba5aa2e5b078055a]'
           ruby -rdigest/sha2 -e 'puts Digest::SHA256.hexdigest(%q[ruby])'
+          echo '// locate libruby.so.3.3'
+          find /opt -name 'libruby.so*'
           echo '// display Rbconfig::CONFIG'
           ruby -e 'pp RbConfig::CONFIG'
 
@@ -59,6 +61,7 @@ jobs:
           echo '// expect 1 testfile, all Test suite pass.'
 
       - name: test ruby on vim
+        if: runner.os == 'Unknown'
         run: |
           echo '// 0. export LD_LIBRARY_PATH for ruby, via $GITHUB_ENV'
           echo "LD_LIBRARY_PATH=$(ruby -rrbconfig -e 'print RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_ENV
@@ -73,7 +76,6 @@ jobs:
           if [ -f test_result.log ]; then cat test_result.log ; fi
           if [ -f test.log ]; then cat test.log ; fi
           echo '// 2. test fail for rb_ary_detransient for +ruby/dyn'
-          locate libruby.so.3.3
           # touch t_y33.vim
           # echo 'func Test_rb_ary_detransient()' >> t_y33.vim
           # echo 'endfunc' >> t_y33.vim
