@@ -43,7 +43,7 @@ jobs:
 
       - name: configure, build, version check vim
         run: |
-          ./configure --enable-gui=no --with-features=normal --enable-rubyinterp=yes
+          ./configure --enable-gui=no --with-features=normal --enable-rubyinterp=dynamic
           make
           ./src/vim --version
 
@@ -55,13 +55,14 @@ jobs:
           cat messages
           echo '// cat test_result.log'
           if [ -f test_result.log ]; then cat test_result.log ; fi
+          if [ -f test.log ]; then cat test.log ; fi
           echo '// expect 1 testfile, all Test suite pass.'
 
       - name: test ruby on vim
         run: |
-          # echo '// 0. export LD_LIBRARY_PATH for ruby'
-          # export LD_LIBRARY_PATH=$(ruby -rrbconfig -e 'print RbConfig.expand(RbConfig::MAKEFILE_CONFIG["bindir"])')
-          # echo '// 1. test fail for NoMethodError format'
+          echo '// 0. export LD_LIBRARY_PATH for ruby, via $GITHUB_ENV'
+          echo "LD_LIBRARY_PATH=$(ruby -rrbconfig -e 'print RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_ENV
+          echo '// 1. test fail for NoMethodError format'
           make testclean
           cd src/testdir
           make test_ruby.res TEST_FILTER=Test_ruby_Vim_buffer_get
@@ -69,7 +70,11 @@ jobs:
           cat messages
           echo '// cat test_result.log'
           if [ -f test_result.log ]; then cat test_result.log ; fi
-          echo '// 2. test fail for rb_ary_detransient'
+          if [ -f test.log ]; then cat test.log ; fi
+          echo '// 2. test fail for rb_ary_detransient for +ruby/dyn'
+          # touch t_y33.vim
+          # echo 'func Test_rb_ary_detransient()' >> t_y33.vim
+          # echo 'endfunc' >> t_y33.vim
 
       - name: close
         run: echo '--- close [testruby] job. bye,,,' $PWD
