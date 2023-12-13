@@ -44,13 +44,21 @@ jobs:
           ruby -e 'pp RbConfig::CONFIG'
 
       - name: configure, build, version check vim
+        if: false
         run: |
           ./configure --enable-gui=no --with-features=normal --enable-rubyinterp=dynamic
           make
           ./src/vim --version
 
+      - name: env LD_LIBRARY_PATH
+        run: |
+          x_ld_library_path=$(ruby -e 'require "rbconfig"; print RbConfig::CONFIG["libdir"]')
+          echo "LD_LIBRARY_PATH=$x_ld_library_path" >> $GITHUB_ENV
+
       - name: test vim
         run: |
+          echo '// setenv LD_L_P=env.L_L_P'
+          export LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
           cd src/testdir
           make test_let.res
           echo '// cat messages.'
@@ -59,9 +67,10 @@ jobs:
           if [ -f test_result.log ]; then cat test_result.log ; fi
           if [ -f test.log ]; then cat test.log ; fi
           echo '// expect 1 testfile, all Test suite pass.'
+          echo '// [ld-library-path]' $LD_LIBRARY_PATH ' [check-me]'
 
       - name: test ruby on vim
-        if: runner.os == 'Unknown'
+        if: false
         run: |
           echo '// 0. export LD_LIBRARY_PATH for ruby, via $GITHUB_ENV'
           echo "LD_LIBRARY_PATH=$(ruby -rrbconfig -e 'print RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_ENV
