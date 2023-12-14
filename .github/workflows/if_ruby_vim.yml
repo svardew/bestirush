@@ -18,7 +18,7 @@ jobs:
 
 
       - name: Checkout repository from github
-        if: false
+        if: true
         uses: actions/checkout@v4
         with:
           repository: svardew/vim
@@ -48,12 +48,11 @@ jobs:
           echo '// add user-ld-so-conf file'
           ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]' | sudo tee /etc/ld.so.conf.d/gha-setup-ruby.conf
           sudo ldconfig
-          echo 'after sudo ldconfig, libruby.so.3.3 cached...'
+          echo '// after sudo ldconfig, libruby.so.3.3 cached...'
           ldconfig -p | grep libruby
-          
 
       - name: configure, build, version check vim
-        if: false
+        if: true
         run: |
           ./configure --enable-gui=no --with-features=normal --enable-rubyinterp=dynamic
           make
@@ -81,11 +80,11 @@ jobs:
           echo '// [ld-library-path]' $LD_LIBRARY_PATH ' [check-me]'
 
       - name: test ruby on vim
-        if: false
+        if: true
         run: |
-          echo '// 0. export LD_LIBRARY_PATH for ruby, via $GITHUB_ENV'
-          echo "LD_LIBRARY_PATH=$(ruby -rrbconfig -e 'print RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_ENV
-          echo '// 1. test fail for NoMethodError format'
+          #-- echo '// 0. export LD_LIBRARY_PATH for ruby, via $GITHUB_ENV'
+          #-- echo "LD_LIBRARY_PATH=$(ruby -rrbconfig -e 'print RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_ENV
+          #-- echo '// 1. test fail for NoMethodError format'
           make testclean
           cd src/testdir
           # make test_ruby.res TEST_FILTER=Test_ruby_Vim_buffer_get
@@ -103,8 +102,8 @@ jobs:
       - name: close
         if: false
         run: |
-          echo '// setenv LD_L_P=env.L_L_P'
-          export LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
-          echo '// [ld-library-path]' $LD_LIBRARY_PATH ' [check-me]'
-          echo $LD_LIBRARY_PATH
+          #-- echo '// setenv LD_L_P=env.L_L_P'
+          #-- export LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
+          #-- echo '// [ld-library-path]' $LD_LIBRARY_PATH ' [check-me]'
+          #-- echo $LD_LIBRARY_PATH
           echo '--- close [testruby] job. bye,,,' $PWD
