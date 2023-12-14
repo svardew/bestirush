@@ -30,7 +30,7 @@ jobs:
         with:
           ruby-version: ruby-3.3.0-rc1
 
-      - name: check setup-ruby stat
+      - name: check setup-ruby stat, ldconfig
         run: |
           echo '// ruby --version && which ruby'
           ruby -v
@@ -42,6 +42,8 @@ jobs:
           find /opt -name 'libruby.so*'
           echo '// display Rbconfig::CONFIG'
           ruby -e 'pp RbConfig::CONFIG'
+          echo '// grep ldconfig'
+          ldconfig -p | grep libruby
 
       - name: configure, build, version check vim
         if: false
@@ -95,4 +97,5 @@ jobs:
           echo '// setenv LD_L_P=env.L_L_P'
           export LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
           echo '// [ld-library-path]' $LD_LIBRARY_PATH ' [check-me]'
+          echo $LD_LIBRARY_PATH
           echo '--- close [testruby] job. bye,,,' $PWD
