@@ -17,7 +17,7 @@ jobs:
         run: echo '--- start [testruby] job. hello,,, ' $PWD
 
       - name: Checkout repository from github
-        if: false
+        if: true
         uses: actions/checkout@v4
         with:
           repository: svardew/vim
