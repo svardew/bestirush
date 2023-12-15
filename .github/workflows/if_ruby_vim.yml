@@ -50,17 +50,24 @@ jobs:
           echo '// after sudo ldconfig, libruby.so.3.3 cached...'
           ldconfig -p | grep libruby
           
-      - name: list ruby files
+      - name: cat pkgconfig
         run: |
-          tree /opt/hostedtoolcache/Ruby
-          
+          ls -lah /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/lib/pkgconfig
+          cat /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/lib/pkgconfig/ruby-3.3.pc
+       
       - name: configure, build, version check vim
-        if: false
+        if: true
         run: |
+          export PKG_CONFIG_PATH=/opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/lib/pkgconfig
+          export LD_LIBRARY_PATH=/opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/lib
           ./configure --enable-gui=no --with-features=normal --enable-rubyinterp=dynamic
           make
           ./src/vim --version
-
+          echo '// lua interface fails'
+          ./src/vim -c 'lua print("atoz")'
+          echo '// ruby interface needs success'
+          ./src/vim -c 'ruby 1+2+3'
+        
       - name: env LD_LIBRARY_PATH [disable]
         if: false
         run: |
