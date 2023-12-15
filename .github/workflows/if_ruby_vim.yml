@@ -16,9 +16,8 @@ jobs:
       - name: begin
         run: echo '--- start [testruby] job. hello,,, ' $PWD
 
-
       - name: Checkout repository from github
-        if: true
+        if: false
         uses: actions/checkout@v4
         with:
           repository: svardew/vim
@@ -50,9 +49,13 @@ jobs:
           sudo ldconfig
           echo '// after sudo ldconfig, libruby.so.3.3 cached...'
           ldconfig -p | grep libruby
-
+          
+      - name: list ruby files
+        run: |
+          tree /opt/hostedtoolcache/Ruby
+          
       - name: configure, build, version check vim
-        if: true
+        if: false
         run: |
           ./configure --enable-gui=no --with-features=normal --enable-rubyinterp=dynamic
           make
@@ -80,7 +83,7 @@ jobs:
           echo '// [ld-library-path]' $LD_LIBRARY_PATH ' [check-me]'
 
       - name: test ruby on vim
-        if: true
+        if: false
         run: |
           #-- echo '// 0. export LD_LIBRARY_PATH for ruby, via $GITHUB_ENV'
           #-- echo "LD_LIBRARY_PATH=$(ruby -rrbconfig -e 'print RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_ENV
