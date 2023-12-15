@@ -63,10 +63,16 @@ jobs:
           ./configure --enable-gui=no --with-features=normal --enable-rubyinterp=dynamic
           make
           ./src/vim --version
-          echo '// lua interface fails'
-          ./src/vim -c 'lua print("atoz")'
-          echo '// ruby interface needs success'
-          ./src/vim -c 'ruby 1+2+3'
+          # echo '// lua interface fails'
+          # ./src/vim -c 'lua print("atoz")'
+          # echo '// ruby interface needs success'
+          # ./src/vim -c 'ruby 1+2+3'
+          touch ./src/testdir/test_y33ruby.vim
+          echo 'func Test_rubydyn_work()' > ./src/testdir/test_y33ruby.vim
+          echo '  ruby 1+2+3' >> ./src/testdir/test_y33ruby.vim
+          echo 'endfunc' >> ./src/testdir/test_y33ruby.vim
+          cd ./src/testdir
+          make test_y33ruby.res
         
       - name: env LD_LIBRARY_PATH [disable]
         if: false
