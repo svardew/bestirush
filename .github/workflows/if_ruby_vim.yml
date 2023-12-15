@@ -30,7 +30,7 @@ jobs:
         with:
           ruby-version: ruby-3.3.0-rc1
 
-      - name: check setup-ruby stat, ldconfig
+      - name: check setup-ruby stat, ldconfig [disable]
         run: |
           echo '// ruby --version && which ruby'
           ruby -v
@@ -42,13 +42,13 @@ jobs:
           find /opt -name 'libruby.so*'
           echo '// display Rbconfig::CONFIG'
           ruby -e 'pp RbConfig::CONFIG["libdir"]'
-          echo '// grep ldconfig'
-          ldconfig -p | grep libruby
-          echo '// add user-ld-so-conf file'
-          ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]' | sudo tee /etc/ld.so.conf.d/gha-setup-ruby.conf
-          sudo ldconfig
-          echo '// after sudo ldconfig, libruby.so.3.3 cached...'
-          ldconfig -p | grep libruby
+          # echo '// grep ldconfig'
+          # ldconfig -p | grep libruby
+          # echo '// add user-ld-so-conf file'
+          # ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]' | sudo tee /etc/ld.so.conf.d/gha-setup-ruby.conf
+          # sudo ldconfig
+          # echo '// after sudo ldconfig, libruby.so.3.3 cached...'
+          # ldconfig -p | grep libruby
           
       - name: cat pkgconfig
         run: |
@@ -72,7 +72,12 @@ jobs:
           echo '  ruby 1+2+3' >> ./src/testdir/test_y33ruby.vim
           echo 'endfunc' >> ./src/testdir/test_y33ruby.vim
           cd ./src/testdir
+          echo 'runtest test_y33ruby'
+          cat test_y33ruby.vim
+          echo '... testing ....'
           make test_y33ruby.res
+          echo '// cat messages'
+          cat messages
         
       - name: env LD_LIBRARY_PATH [disable]
         if: false
