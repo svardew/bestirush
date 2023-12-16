@@ -1,0 +1,50 @@
+name: ruby 3.3 transient_heap and NoMethoError format
+
+on:
+  push:
+    branches: ['acme']
+  workflow_dispatch:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  testruby:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: begin
+        run: |
+          echo << EOM
+          --- start [testruby] job. hello,,,
+          /// $PWD
+          EOM
+
+      - name: Checkout repository from github
+        if: true
+        uses: actions/checkout@v4
+        with:
+          repository: svardew/vim
+          # ref: v9.0.2138
+          ref: fda700cb04612fe2f9301a9ba820309175decabf
+          path: ./vim
+
+      - name: setup ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ruby-3.3.0-rc1
+
+      - name: rb33env
+        if: false
+        run: |
+          echo '// locate libruby.so.3.3'
+          find /opt -name 'libruby.so*'
+          echo '// locate pkgconfig *.pc file'
+          ruby -rrbconfig -e'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")
+
+      - name: close
+        if: true
+        run: |
+          echo '--- close [testruby] job. <<<' $PWD
+
+# vim: tw=2 :
