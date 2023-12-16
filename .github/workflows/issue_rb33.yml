@@ -15,10 +15,10 @@ jobs:
     steps:
       - name: begin
         run: |
-          echo << EOM
-          --- start [testruby] job. hello,,,
-          /// $PWD
-          EOM
+          echo '--- start [testruby] job. hello >>>' $PWD
+          echo '/// in acion.yml, bash-heredoc not use.'
+          echo '/// multi time echo is need'
+          ls . -1
 
       - name: Checkout repository from github
         if: true
@@ -35,12 +35,17 @@ jobs:
           ruby-version: ruby-3.3.0-rc1
 
       - name: rb33env
-        if: false
+        if: true
         run: |
+          echo 'list current dir after actions/checkout'
+          ls -1
+          echo '// which ruby and ruby version'
+          which ruby
+          ruby -v
           echo '// locate libruby.so.3.3'
           find /opt -name 'libruby.so*'
           echo '// locate pkgconfig *.pc file'
-          ruby -rrbconfig -e'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")
+          ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")'
 
       - name: close
         if: true
