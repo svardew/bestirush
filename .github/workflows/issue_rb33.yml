@@ -55,8 +55,8 @@ jobs:
       - name: close
         if: true
         run: |
-          echo "${{ $rb33_pkgconfigpath }}"
-          echo "${{ $rb33_ldlibrarypath }}"
+          echo "$rb33_pkgconfigpath"
+          echo "$rb33_ldlibrarypath"
           echo '--- close [testruby] job. <<<' $PWD
 
 # vim: tw=2 :
