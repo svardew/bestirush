@@ -38,7 +38,7 @@ jobs:
         if: true
         run: |
           echo 'list current dir after actions/checkout'
-          ls -1
+          ls -1 -p
           echo '// which ruby and ruby version'
           which ruby
           ruby -v
@@ -46,15 +46,17 @@ jobs:
           find /opt -name 'libruby.so*'
           echo '// locate pkgconfig *.pc file'
           ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")'
-        env:
-          rb33pcdir: this is a pen
-          rb33libdir: $(ruby -e 'puts 33*3')
+          echo '// set ld_library_path and pkg_config_path to GITHUB_ENV'
+          str = $(ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")[0]')
+          echo "rb33_pkgconfigpath=${str}" >> "$GITHUB_ENV"
+          str = $(ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]')
+          echo "rb33_ldlibrarypath=${str}" >> "$GITHUB_ENV"
 
       - name: close
         if: true
         run: |
-          echo "${{ rb33env.rb33pcdir }}"
-          echo "${{ rb33env.rb33libdir }}"
+          echo "${{ $rb33_pkgconfigpath }}"
+          echo "${{ $rb33_ldlibrarypath }}"
           echo '--- close [testruby] job. <<<' $PWD
 
 # vim: tw=2 :
