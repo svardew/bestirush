@@ -46,10 +46,15 @@ jobs:
           find /opt -name 'libruby.so*'
           echo '// locate pkgconfig *.pc file'
           ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")'
+        env:
+          rb33pcdir: this is a pen
+          rb33libdir: $(ruby -e 'puts 33*3')
 
       - name: close
         if: true
         run: |
+          echo "${{ rb33env.rb33pcdir }}"
+          echo "${{ rb33env.rb33libdir }}"
           echo '--- close [testruby] job. <<<' $PWD
 
 # vim: tw=2 :
