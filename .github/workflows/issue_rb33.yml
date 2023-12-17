@@ -141,6 +141,7 @@ jobs:
 
       - name: prepare patch for if_ruby.c, test_ruby.vim
         if: true
+        shell: bash +x {0}
         run: |
           # diff -u0 orig changed > patch-xxx
           # patch orig --input /path/to/patch-xxx
@@ -173,7 +174,6 @@ jobs:
           echo '<cc'
           touch patch-test_ruby
           echo '<dd diff return error code, need [set +x]'
-          set +x
           # diff -U 1 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
           md5sum ./vim/src/testdir/test_ruby.vim
           md5sum ./test_ruby.vim.mod
