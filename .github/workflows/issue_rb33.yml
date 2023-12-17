@@ -20,8 +20,22 @@ jobs:
           echo '/// multi time echo is need'
           ls . -1
 
-      - name: Checkout repository from github
+      - name: staa
         if: true
+        env:
+          user: svardewaa
+          age: nice
+
+      - name: stbb
+        if: true
+        env:
+          user: svardewbb
+          age: 99
+        run: |
+          echo ${{ env.age }} age..
+
+      - name: Checkout repository from github
+        if: false
         uses: actions/checkout@v4
         with:
           repository: svardew/vim
@@ -30,12 +44,13 @@ jobs:
           path: ./vim
 
       - name: setup ruby
+        if: false
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ruby-3.3.0-rc1
 
       - name: rb33env
-        if: true
+        if: false
         run: |
           echo 'list current dir after actions/checkout'
           ls -1 -p
@@ -47,16 +62,20 @@ jobs:
           echo '// locate pkgconfig *.pc file'
           ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")'
           echo '// set ld_library_path and pkg_config_path to GITHUB_ENV'
-          str = $(ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")[0]')
-          echo "rb33_pkgconfigpath=${str}" >> "$GITHUB_ENV"
-          str = $(ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]')
-          echo "rb33_ldlibrarypath=${str}" >> "$GITHUB_ENV"
+          # str = $(ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")[0]')
+          # echo "rb33_pkgconfigpath=${str}" >> "$GITHUB_ENV"
+          # str = $(ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]')
+          # echo "rb33_ldlibrarypath=${str}" >> "$GITHUB_ENV"
+          echo '// set some_ghenv_var'
+          foo="this is a pen"
+          echo "some_ghenv_var=${foo}" >> "$GITHUB_ENV"
 
       - name: close
-        if: true
+        if: false
         run: |
-          echo "$rb33_pkgconfigpath"
-          echo "$rb33_ldlibrarypath"
+          echo "$some_ghenv_var"
+          # echo "$rb33_pkgconfigpath"
+          # echo "$rb33_ldlibrarypath"
           echo '--- close [testruby] job. <<<' $PWD
 
 # vim: tw=2 :
