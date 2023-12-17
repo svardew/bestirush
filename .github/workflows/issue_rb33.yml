@@ -169,7 +169,7 @@ jobs:
           cat ./vim/src/testdir/test_ruby.vim | sed '/NoMethodError/ s/nil:NilClass/nil/ ;' > test_ruby.vim.mod
           touch patch-test_ruby
           # sed '/NoMethodError/ s,nil:NilClass,nil,' ./vim/src/testdir/test_ruby.vim > test_ruby.vim.mod
-          diff -u -C 0 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
+          diff --unified=0 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
           # rm ./test_ruby.vim.mod
           echo "// cat patch-if_ruby"
           cat patch-if_ruby
