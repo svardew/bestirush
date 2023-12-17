@@ -89,7 +89,7 @@ jobs:
           echo "func Test_cmd_ruby_works()" >  test_yy1
           echo "  ruby 1+2+3"              >> test_yy1
           echo "endfunc"                   >> test_yy1
-          mv test_yy1 test_yy1exrubywork.vim
+          mv test_yy1 test_yy1cmdrubywork.vim
           touch test_yy2 nomethoderror.vim
           echo "func Test_ruby_nomethoderror_format()" >  test_yy2
           echo "  call assert_fails('ruby print nil.hjkl'," >> test_yy2
