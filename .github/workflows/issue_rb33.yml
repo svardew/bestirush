@@ -25,6 +25,8 @@ jobs:
         env:
           user: svardewaa
           age: nice
+        run: |
+          /bin/true
 
       - name: stbb
         if: true
