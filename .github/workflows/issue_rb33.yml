@@ -38,7 +38,7 @@ jobs:
           age: 99
         run: |
           echo ${{ env.age }} age..
-          echo ${{ steps.staa.go_age }} age..., via steps.staa.age from GITHUB_OUTPUT setted at staa-step.
+          echo ${{ steps.staa.outputs.go_age }} age..., via steps.staa.age from GITHUB_OUTPUT setted at staa-step.
 
       - name: Checkout repository from github
         if: false
