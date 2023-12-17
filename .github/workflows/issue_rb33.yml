@@ -74,8 +74,8 @@ jobs:
           # str = $(ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]')
           # echo "rb33_ldlibrarypath=${str}" >> "$GITHUB_ENV"
           echo '// set ld_library_path and pkg_config_path to GITHUB_OUTPUTS'
-          echo "rb33_ldlibrarypath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_OUTPUTS
-          echo "rb33_pkgconfigpath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]+%q</pkgconfig>')" >> $GITHUB_OUTPUTS
+          echo "rb33_ldlibrarypath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_OUTPUT
+          echo "rb33_pkgconfigpath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]+%q</pkgconfig>')" >> $GITHUB_OUTPUT
 
       - name: check ghoutputs
         run: |
