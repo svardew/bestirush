@@ -174,7 +174,10 @@ jobs:
           touch patch-test_ruby
           echo '<dd'
           # diff -U 1 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
+          md5sum ./vim/src/testdir/test_ruby.vim
+          md5sum ./test_ruby.vim.mod
           diff ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod
+          echo "ok?"
           echo '<ee'
           echo '<ff'
           cat patch-test_ruby
@@ -183,6 +186,7 @@ jobs:
           echo "// cat patch-if_ruby"
           cat patch-if_ruby
           # echo "// cat patch-test_ruby"
+
           # cat patch-test_ruby
 
       - name: build patched vim with static link rb33rc1, check if test_ruby.vim pass
