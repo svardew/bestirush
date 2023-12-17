@@ -41,7 +41,7 @@ jobs:
           echo ${{ steps.staa.outputs.go_age }} age..., via steps.staa.age from GITHUB_OUTPUT setted at staa-step.
 
       - name: Checkout repository from github
-        if: false
+        if: true
         uses: actions/checkout@v4
         with:
           repository: svardew/vim
@@ -78,14 +78,68 @@ jobs:
           echo "rb33_pkgconfigpath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]+%q</pkgconfig>')" >> $GITHUB_OUTPUT
 
       - name: check ghoutputs
+        if: false
         run: |
           echo ${{ steps.rb33env.outputs.rb33_pkgconfigpath }}, PKG_CONFIG_PATH
           echo ${{ steps.rb33env.outputs.rb33_ldlibrarypath }}, LD_LIBRARY_PATH
 
-      - name: close
+      - name: add issue tests. Test_ex_ruby_works, Test_ruby_nomethoderror_format
+        run: |
+          touch test_yy1
+          echo "func Test_ex_ruby_works()" >  test_yy1
+          echo "  ruby 1+2+3"              >> test_yy1
+          echo "endfunc"                   >> test_yy1
+          mv test_yy1 test_yy1exrubywork.vim
+          touch test_yy2 nomethoderror.vim
+          echo "func Test_ruby_nomethoderror_format()" >  test_yy2
+          echo "  call assert_fails('ruby print nil.hjkl'," >> test_yy2
+          echo "  \           \"NoMethodError: undefined method `hjkl' for nil:NilClass\")" >> test_yy2
+          echo "endfunc" >> test_yy2
+          mv test_yy2 test_yy2nomethoderror.vim
+          cat test_yy1exrubywork.vim
+          cat test_yy2nomethoderror.vim
+
+      - name: current vim with ruby-3.3.0-rc1
+        if: false
+        run: echo 'check current vim with ruby-3.3.0 issue'
+
+      - name: build vim with static link rb33rc1, test issue tests
+        if: true
+        run: |
+          cp -R ./vim vim-rb33yes
+          cp test_yy*.vim ./vim-rb33yes/src/testdir/
+          cd ./vim-rb33yes/
+          export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
+          export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
+          ./configure --disable-gui --disable-libsodium --enable-rubyinterp=yes
+          make
+          cd src/testdir
+          make test_yy1exrubywork.res
+          make test_yy2nomethoderror.res
+          echo '// expect: vim +ruby33/yes fail NoMethoderror, success ex_ruby'
+          cat messages
+
+      - name: build vim with dynamic link rb33rc1, test issue tests
         if: false
         run: |
-          echo "$some_ghenv_var"
+          cp -R ./vim vim-rb33dyn
+          cp test_yy*.vim ./vim-rb33dyn/src/testdir/
+          cd ./vim-rb33dyn/
+          export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
+          export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
+          ./configure --disable-gui --disable-libsodium --enable-rubyinterp=yes
+          make
+          cd src/testdir
+          make test_yy1exrubywork.res
+          make test_yy2nomethoderror.res
+          echo '// expect: vim +ruby33/dyn fail NoMethoderror, and ex_ruby'
+          cat messages
+
+      - name: close
+        if: true
+        run: |
+          ls -plha .
+          find . -type f -name '*.res'
           # echo "$rb33_pkgconfigpath"
           # echo "$rb33_ldlibrarypath"
           echo '--- close [testruby] job. <<<' $PWD
