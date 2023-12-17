@@ -83,20 +83,24 @@ jobs:
           echo ${{ steps.rb33env.outputs.rb33_pkgconfigpath }}, PKG_CONFIG_PATH
           echo ${{ steps.rb33env.outputs.rb33_ldlibrarypath }}, LD_LIBRARY_PATH
 
-      - name: add issue tests. Test_ex_ruby_works, Test_ruby_nomethoderror_format
+      - name: add issue tests. Test_cmd_ruby_works, Test_ruby_nomethoderror_format
         run: |
           touch test_yy1
-          echo "func Test_ex_ruby_works()" >  test_yy1
+          echo "func Test_cmd_ruby_works()" >  test_yy1
           echo "  ruby 1+2+3"              >> test_yy1
           echo "endfunc"                   >> test_yy1
           mv test_yy1 test_yy1exrubywork.vim
           touch test_yy2 nomethoderror.vim
           echo "func Test_ruby_nomethoderror_format()" >  test_yy2
           echo "  call assert_fails('ruby print nil.hjkl'," >> test_yy2
-          echo "  \           \"NoMethodError: undefined method `hjkl' for nil:NilClass\")" >> test_yy2
+          # echo "  \           \"NoMethodError: undefined method `hjkl' for nil:NilClass\")" >> test_yy2
+          # ! %60/backtick, %5C/backslash, %22/doublequote
+          # ! sed -i 
+          echo "  %5C           %22NoMethodError: undefined method %60hjkl' for nil:NilClass%22)" >> test_yy2
           echo "endfunc" >> test_yy2
+          sed -i 's:%5C:\\:g; s:%22:":g; s:%60:`:g' test_yy2
           mv test_yy2 test_yy2nomethoderror.vim
-          cat test_yy1exrubywork.vim
+          cat test_yy1cmdrubywork.vim
           cat test_yy2nomethoderror.vim
 
       - name: current vim with ruby-3.3.0-rc1
@@ -114,9 +118,9 @@ jobs:
           ./configure --disable-gui --disable-libsodium --enable-rubyinterp=yes
           make
           cd src/testdir
-          make test_yy1exrubywork.res
+          make test_yy1cmdrubywork.res
           make test_yy2nomethoderror.res
-          echo '// expect: vim +ruby33/yes fail NoMethoderror, success ex_ruby'
+          echo '// expect: vim +ruby33/yes fail NoMethoderror, success :ruby'
           cat messages
 
       - name: build vim with dynamic link rb33rc1, test issue tests
@@ -130,9 +134,9 @@ jobs:
           ./configure --disable-gui --disable-libsodium --enable-rubyinterp=yes
           make
           cd src/testdir
-          make test_yy1exrubywork.res
+          make test_yy1cmdrubywork.res
           make test_yy2nomethoderror.res
-          echo '// expect: vim +ruby33/dyn fail NoMethoderror, and ex_ruby'
+          echo '// expect: vim +ruby33/dyn fail both NoMethoderror and :ruby'
           cat messages
 
       - name: close
