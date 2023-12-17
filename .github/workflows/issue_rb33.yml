@@ -131,7 +131,7 @@ jobs:
           cd ./vim-rb33dyn/
           export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
           export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
-          ./configure --disable-gui --disable-libsodium --enable-rubyinterp=yes
+          ./configure --disable-gui --disable-libsodium --enable-rubyinterp=dynamic
           make
           cd src/testdir
           make test_yy1cmdrubywork.res
