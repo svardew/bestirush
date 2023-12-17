@@ -162,21 +162,21 @@ jobs:
           echo "@@ -721 +721 @@"  >> ./patch-if_ruby
           echo "-# if RUBY_VERSION >= 26"  >> ./patch-if_ruby
           echo "+# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
-          which sed
-          sed --version
-          which diff
-          diff --version
+          # which sed
+          # sed --version
+          # which diff
+          # diff --version
           echo '<aa'
-          cat ./vim/src/testdir/test_ruby.vim | sed '/NoMethodError/ s/nil:NilClass/nil/ ;' > test_ruby.vim.mod
+          sed '/NoMethodError/ s/nil:NilClass/nil/ ;' ./vim/src/testdir/test_ruby.vim > test_ruby.vim.mod
           echo '<bb'
           cat ./test_ruby.vim.mod
           echo '<cc'
           touch patch-test_ruby
-          sed '/NoMethodError/ s,nil:NilClass,nil,' ./vim/src/testdir/test_ruby.vim > test_ruby.vim.mod
           echo '<dd'
           # diff -U 1 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
-          diff -U 1 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod
+          diff ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod
           echo '<ee'
+          echo '<ff'
           cat patch-test_ruby
           echo '<zz'
           # rm ./test_ruby.vim.mod
