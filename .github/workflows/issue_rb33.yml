@@ -174,7 +174,8 @@ jobs:
           touch patch-test_ruby
           sed '/NoMethodError/ s,nil:NilClass,nil,' ./vim/src/testdir/test_ruby.vim > test_ruby.vim.mod
           echo '<dd'
-          diff --unified=1 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
+          # diff -U 1 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
+          diff -U 1 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod
           echo '<ee'
           cat patch-test_ruby
           echo '<zz'
