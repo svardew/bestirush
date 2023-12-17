@@ -16,8 +16,7 @@ jobs:
       - name: begin
         run: |
           echo '--- start [testruby] job. hello >>>' $PWD
-          echo '/// in acion.yml, bash-heredoc not use.'
-          echo '/// multi time echo is need'
+          echo "// ls $CWD"
           ls . -1
 
       - name: staa
@@ -90,7 +89,7 @@ jobs:
           echo "  ruby 1+2+3"              >> test_yy1
           echo "endfunc"                   >> test_yy1
           mv test_yy1 test_yy1cmdrubywork.vim
-          touch test_yy2 nomethoderror.vim
+          touch test_yy2
           echo "func Test_ruby_nomethoderror_format()" >  test_yy2
           echo "  call assert_fails('ruby print nil.hjkl'," >> test_yy2
           # echo "  \           \"NoMethodError: undefined method `hjkl' for nil:NilClass\")" >> test_yy2
@@ -100,6 +99,7 @@ jobs:
           echo "endfunc" >> test_yy2
           sed -i 's:%5C:\\:g; s:%22:":g; s:%60:`:g' test_yy2
           mv test_yy2 test_yy2nomethoderror.vim
+          echo "// cat 2 test file"
           cat test_yy1cmdrubywork.vim
           cat test_yy2nomethoderror.vim
 
@@ -120,11 +120,11 @@ jobs:
           cd src/testdir
           make test_yy1cmdrubywork.res
           make test_yy2nomethoderror.res
-          echo '// expect: vim +ruby33/yes fail NoMethoderror, success :ruby'
+          echo '// expect: vim +ruby33/yes fail NoMethoderror, but success :ruby'
           cat messages
 
       - name: build vim with dynamic link rb33rc1, test issue tests
-        if: false
+        if: true
         run: |
           cp -R ./vim vim-rb33dyn
           cp test_yy*.vim ./vim-rb33dyn/src/testdir/
@@ -142,7 +142,9 @@ jobs:
       - name: close
         if: true
         run: |
+          echo "// ls $CWD"
           ls -plha .
+          echo "// find *.res for test-success"
           find . -type f -name '*.res'
           # echo "$rb33_pkgconfigpath"
           # echo "$rb33_ldlibrarypath"
