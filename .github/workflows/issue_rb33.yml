@@ -172,7 +172,8 @@ jobs:
           cat ./test_ruby.vim.mod
           echo '<cc'
           touch patch-test_ruby
-          echo '<dd'
+          echo '<dd diff return error code, need [set +x]'
+          set +x
           # diff -U 1 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
           md5sum ./vim/src/testdir/test_ruby.vim
           md5sum ./test_ruby.vim.mod
