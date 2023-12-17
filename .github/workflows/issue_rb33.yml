@@ -17,7 +17,7 @@ jobs:
         run: |
           echo '--- start [testruby] job. hello >>>' $PWD
           echo "// ls $CWD"
-          ls . -1
+          ls . -1lah
 
       - name: staa
         id: staa
@@ -44,8 +44,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: svardew/vim
-          # ref: v9.0.2138
-          ref: fda700cb04612fe2f9301a9ba820309175decabf
+          # ref: 9.0.2173
+          ref: 062bb6b9099f4c92e10465e5ff98db092a3eac1b
           path: ./vim
 
       - name: setup ruby
@@ -82,15 +82,15 @@ jobs:
           echo ${{ steps.rb33env.outputs.rb33_pkgconfigpath }}, PKG_CONFIG_PATH
           echo ${{ steps.rb33env.outputs.rb33_ldlibrarypath }}, LD_LIBRARY_PATH
 
-      - name: add issue tests. Test_cmd_ruby_works, Test_ruby_nomethoderror_format
+      - name: prepare issue tests. Test_cmd_ruby_works, Test_ruby_nomethoderror_format
         run: |
           touch test_yy1
-          echo "func Test_cmd_ruby_works()" >  test_yy1
+          echo "func Test_cmd_ruby_works()" >>  test_yy1
           echo "  ruby 1+2+3"              >> test_yy1
           echo "endfunc"                   >> test_yy1
           mv test_yy1 test_yy1cmdrubywork.vim
           touch test_yy2
-          echo "func Test_ruby_nomethoderror_format()" >  test_yy2
+          echo "func Test_ruby_nomethoderror_format()" >>  test_yy2
           echo "  call assert_fails('ruby print nil.hjkl'," >> test_yy2
           # echo "  \           \"NoMethodError: undefined method `hjkl' for nil:NilClass\")" >> test_yy2
           # ! %60/backtick, %5C/backslash, %22/doublequote
@@ -108,7 +108,7 @@ jobs:
         run: echo 'check current vim with ruby-3.3.0 issue'
 
       - name: build vim with static link rb33rc1, test issue tests
-        if: true
+        if: false
         run: |
           cp -R ./vim vim-rb33yes
           cp test_yy*.vim ./vim-rb33yes/src/testdir/
@@ -124,7 +124,7 @@ jobs:
           cat messages
 
       - name: build vim with dynamic link rb33rc1, test issue tests
-        if: true
+        if: false
         run: |
           cp -R ./vim vim-rb33dyn
           cp test_yy*.vim ./vim-rb33dyn/src/testdir/
@@ -137,6 +137,72 @@ jobs:
           make test_yy1cmdrubywork.res
           make test_yy2nomethoderror.res
           echo '// expect: vim +ruby33/dyn fail both NoMethoderror and :ruby'
+          cat messages
+
+      - name: prepare patch for if_ruby.c, test_ruby.vim
+        if: true
+        run: |
+          # diff -u0 orig changed > patch-xxx
+          # patch orig --input /path/to/patch-xxx
+          touch patch-if_ruby
+          echo "--- ./if_ruby.c.orig"  >> ./patch-if_ruby
+          echo "+++ ./if_ruby.c.mod"  >> ./patch-if_ruby
+          echo "@@ -86 +86 @@"  >> ./patch-if_ruby
+          echo "-# if RUBY_VERSION >= 26"  >> ./patch-if_ruby
+          echo "+# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
+          echo "@@ -459 +459 @@"  >> ./patch-if_ruby
+          echo "-# if RUBY_VERSION >= 26"  >> ./patch-if_ruby
+          echo "+# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
+          echo "@@ -494 +494 @@"  >> ./patch-if_ruby
+          echo "-# if RUBY_VERSION >= 26"  >> ./patch-if_ruby
+          echo "+# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
+          echo "@@ -564 +564 @@"  >> ./patch-if_ruby
+          echo "-#  if RUBY_VERSION >= 26"  >> ./patch-if_ruby
+          echo "+#  if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
+          echo "@@ -721 +721 @@"  >> ./patch-if_ruby
+          echo "-# if RUBY_VERSION >= 26"  >> ./patch-if_ruby
+          echo "+# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
+          touch patch-test_ruby
+          sed '/NoMethodError/ s,nil:NilClass,nil,' ./vim/src/testdir/test_ruby.vim > test_ruby.vim.mod
+          diff -u0 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
+          rm ./test_ruby.vim.mod
+          echo "// cat patch-if_ruby"
+          cat patch-if_ruby
+          echo "// cat patch-test_ruby"
+          cat patch-test_ruby
+
+      - name: build patched vim with static link rb33rc1, check if test_ruby.vim pass
+        if: false
+        run: |
+          mkdir vim-rb33yes-patched
+          cp -R ./vim/* ./vim-rb33yes-patched
+          cd ./vim-rb33yes-patched/
+          patch src/if_ruby.c --input ../patch-if_ruby
+          patch src/testdir/test_ruby.vim --input ../patch-test_ruby
+          export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
+          export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
+          ./configure --disable-gui --disable-libsodium --enable-rubyinterp=yes
+          make
+          cd src/testdir
+          make test_ruby.res
+          echo '// expect: patched vim +ruby33/yes success test_ruby.vim'
+          cat messages
+
+      - name: build patched vim with dynamic link rb33rc1, check if test_ruby.vim pass
+        if: false
+        run: |
+          mkdir vim-rb33dyn-patched
+          cp -R ./vim/* ./vim-rb33dyn-patched
+          cd ./vim-rb33dyn-patched/
+          patch src/if_ruby.c --input ../patch-if_ruby
+          patch src/testdir/test_ruby.vim --input ../patch-test_ruby
+          export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
+          export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
+          ./configure --disable-gui --disable-libsodium --enable-rubyinterp=dynamic
+          make
+          cd src/testdir
+          make test_ruby.res
+          echo '// expect: patched vim +ruby33/dyn success test_ruby.vim'
           cat messages
 
       - name: close
