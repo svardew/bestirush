@@ -21,20 +21,24 @@ jobs:
           ls . -1
 
       - name: staa
+        id: staa
         if: true
         env:
           user: svardewaa
           age: nice
         run: |
+          echo "go_age=${{ env.age }}" >> $GITHUB_OUTPUT
           /bin/true
 
       - name: stbb
+        id: stbb
         if: true
         env:
           user: svardewbb
           age: 99
         run: |
           echo ${{ env.age }} age..
+          echo ${{ steps.staa.go_age }} age..., via steps.staa.age from GITHUB_OUTPUT setted at staa-step.
 
       - name: Checkout repository from github
         if: false
