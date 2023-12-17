@@ -22,7 +22,7 @@ jobs:
 
       - name: staa
         id: staa
-        if: true
+        if: false
         env:
           user: svardewaa
           age: nice
@@ -32,7 +32,7 @@ jobs:
 
       - name: stbb
         id: stbb
-        if: true
+        if: false
         env:
           user: svardewbb
           age: 99
@@ -50,12 +50,13 @@ jobs:
           path: ./vim
 
       - name: setup ruby
-        if: false
+        if: true
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ruby-3.3.0-rc1
 
       - name: rb33env
+        id: rb33env
         if: false
         run: |
           echo 'list current dir after actions/checkout'
@@ -67,14 +68,19 @@ jobs:
           find /opt -name 'libruby.so*'
           echo '// locate pkgconfig *.pc file'
           ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")'
-          echo '// set ld_library_path and pkg_config_path to GITHUB_ENV'
+          # echo '// set ld_library_path and pkg_config_path to GITHUB_ENV'
           # str = $(ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")[0]')
           # echo "rb33_pkgconfigpath=${str}" >> "$GITHUB_ENV"
           # str = $(ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]')
           # echo "rb33_ldlibrarypath=${str}" >> "$GITHUB_ENV"
-          echo '// set some_ghenv_var'
-          foo="this is a pen"
-          echo "some_ghenv_var=${foo}" >> "$GITHUB_ENV"
+          echo '// set ld_library_path and pkg_config_path to GITHUB_OUTPUTS'
+          echo "rb33_ldlibrarypath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_OUTPUTS
+          echo "rb33_pkgconfigpath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]+%q</pkgconfig>')" >> $GITHUB_OUTPUTS
+
+        - name: check ghoutputs
+          run: |
+            echo ${{ steps.rb33env.outputs.rb33_pkgconfigpath }}, PKG_CONFIG_PATH
+            echo ${{ steps.rb33env.outputs.rb33_ldlibrarypath }}, LD_LIBRARY_PATH
 
       - name: close
         if: false
