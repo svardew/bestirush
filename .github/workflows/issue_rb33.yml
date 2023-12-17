@@ -77,10 +77,10 @@ jobs:
           echo "rb33_ldlibrarypath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_OUTPUTS
           echo "rb33_pkgconfigpath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]+%q</pkgconfig>')" >> $GITHUB_OUTPUTS
 
-        - name: check ghoutputs
-          run: |
-            echo ${{ steps.rb33env.outputs.rb33_pkgconfigpath }}, PKG_CONFIG_PATH
-            echo ${{ steps.rb33env.outputs.rb33_ldlibrarypath }}, LD_LIBRARY_PATH
+      - name: check ghoutputs
+        run: |
+          echo ${{ steps.rb33env.outputs.rb33_pkgconfigpath }}, PKG_CONFIG_PATH
+          echo ${{ steps.rb33env.outputs.rb33_ldlibrarypath }}, LD_LIBRARY_PATH
 
       - name: close
         if: false
