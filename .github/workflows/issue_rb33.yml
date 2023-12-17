@@ -57,7 +57,7 @@ jobs:
 
       - name: rb33env
         id: rb33env
-        if: false
+        if: true
         run: |
           echo 'list current dir after actions/checkout'
           ls -1 -p
