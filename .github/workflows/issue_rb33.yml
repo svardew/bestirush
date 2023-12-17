@@ -162,14 +162,14 @@ jobs:
           echo "@@ -721 +721 @@"  >> ./patch-if_ruby
           echo "-# if RUBY_VERSION >= 26"  >> ./patch-if_ruby
           echo "+# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
-          touch patch-test_ruby
-          sed '/NoMethodError/ s,nil:NilClass,nil,' ./vim/src/testdir/test_ruby.vim > test_ruby.vim.mod
-          diff -u0 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
-          rm ./test_ruby.vim.mod
+          # touch patch-test_ruby
+          # sed '/NoMethodError/ s,nil:NilClass,nil,' ./vim/src/testdir/test_ruby.vim > test_ruby.vim.mod
+          # diff -u0 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
+          # rm ./test_ruby.vim.mod
           echo "// cat patch-if_ruby"
           cat patch-if_ruby
-          echo "// cat patch-test_ruby"
-          cat patch-test_ruby
+          # echo "// cat patch-test_ruby"
+          # cat patch-test_ruby
 
       - name: build patched vim with static link rb33rc1, check if test_ruby.vim pass
         if: false
