@@ -29,13 +29,13 @@ jobs:
           ref: 062bb6b9099f4c92e10465e5ff98db092a3eac1b
           path: ./vim
 
-      - name: setup ruby
+      - name: Setup ruby
         if: true
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ruby-3.3.0-rc1
 
-      - name: set ruby-3.3 environment values
+      - name: Set ruby-3.3 environment values
         id: rb33env
         if: true
         run: |
@@ -47,20 +47,22 @@ jobs:
           echo '// locate pkgconfig file (ruby-x.x.pc)'
           ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")'
           echo '// set ld_library_path and pkg_config_path to GITHUB_OUTPUTS'
+          echo '// check at next step, and use at build steps'
           rb33libdir=$(ruby -rrbconfig -e 'print RbConfig::CONFIG[%q<libdir>]')
           rb33pkgconfigdir=${rb33libdir}'/pkgconfig'
           echo "rb33_ldlibrarypath=${rb33libdir}" >> $GITHUB_OUTPUT
           echo "rb33_pkgconfigpath=${rb33pkgconfigdir}" >> $GITHUB_OUTPUT
 
-      - name: check github_output values
+      - name: Check github_output values
         if: true
         run: |
+          echo "// check rubyish env from GITHUB_OUTPUT..."
           echo ${{ steps.rb33env.outputs.rb33_pkgconfigpath }}, PKG_CONFIG_PATH
           echo ${{ steps.rb33env.outputs.rb33_ldlibrarypath }}, LD_LIBRARY_PATH
-          echo "force fail.."
-          /bin/false
+          # echo "force fail.."
+          # /bin/false
 
-      - name: prepare issue tests. Test_cmd_ruby_works, Test_ruby_nomethoderror_format
+      - name: Prepare issue tests. Test_cmd_ruby_works, Test_ruby_nomethoderror_format
         run: |
           echo "// these 2 test may fail"
           touch test_yy1cmdrubywork.vim
@@ -80,16 +82,17 @@ jobs:
           cat test_yy1cmdrubywork.vim
           cat test_yy2nomethoderror.vim
 
-      - name: current vim with ruby-3.3.0-rc1
+      - name: build, test for current vim with ruby-3.3.0-rc1
         if: false
-        run: echo 'check current vim with ruby-3.3.0 issue'
+        run: /bin/true
 
       - name: build vim with static link rb33rc1, test issue tests
-        if: false
+        if: true
         run: |
-          cp -R ./vim vim-rb33yes
-          cp test_yy*.vim ./vim-rb33yes/src/testdir/
-          cd ./vim-rb33yes/
+          mkdir vim-rb33yes
+          cd vim-rb33yes
+          cp -R ../vim/* ./
+          cp ../test_yy*.vim ./src/testdir/
           export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
           export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
           ./configure --disable-gui --disable-libsodium --enable-rubyinterp=yes
@@ -103,9 +106,10 @@ jobs:
       - name: build vim with dynamic link rb33rc1, test issue tests
         if: false
         run: |
-          cp -R ./vim vim-rb33dyn
-          cp test_yy*.vim ./vim-rb33dyn/src/testdir/
-          cd ./vim-rb33dyn/
+          mkdir vim-rb33dyn
+          cd ./vim-rb33dyn
+          cp -R ../vim/* ./
+          cp ../test_yy*.vim ./src/testdir/
           export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
           export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
           ./configure --disable-gui --disable-libsodium --enable-rubyinterp=dynamic
@@ -124,6 +128,7 @@ jobs:
           # diff -U0 orig changed > patch-xxx
           # patch orig --input /path/to/patch-xxx
           touch patch-if_ruby
+          echo '- ruby3.3 remove transient_heap. disable rb_ary_detransient, etc.'
           cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > patch-if_ruby
           : --- ./if_ruby.c.orig
           : +++ ./if_ruby.c.mod
@@ -144,6 +149,7 @@ jobs:
           : +# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
           HERE_DOCU_MENT
           touch patch-test_ruby
+          echo '- ruby3.3 change NoMethodError format. loose pattern in Test_ruby_Vim_buffer_get()'
           touch test_ruby.vim.mod
           sed '/NoMethodError/ s/nil:NilClass/nil/ ;' ./vim/src/testdir/test_ruby.vim > test_ruby.vim.mod
           diff -U 0 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
