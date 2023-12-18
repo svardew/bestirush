@@ -13,7 +13,7 @@ jobs:
       # ref: v9.0.2138
       REF: fda700cb04612fe2f9301a9ba820309175decabf
 
-    startegy:
+    strategy:
       fail-fast: false
       matrix:
         config: --disable-gui --disable-libsodium --with-features=normal
