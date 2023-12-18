@@ -16,35 +16,16 @@ jobs:
       - name: begin
         run: |
           echo '--- start [testruby] job. hello >>>' $PWD
-          echo "// ls $CWD"
+          echo '// ls $CWD is empty'
           ls . -1lah
-
-      - name: staa
-        id: staa
-        if: false
-        env:
-          user: svardewaa
-          age: nice
-        run: |
-          echo "go_age=${{ env.age }}" >> $GITHUB_OUTPUT
-          /bin/true
-
-      - name: stbb
-        id: stbb
-        if: false
-        env:
-          user: svardewbb
-          age: 99
-        run: |
-          echo ${{ env.age }} age..
-          echo ${{ steps.staa.outputs.go_age }} age..., via steps.staa.age from GITHUB_OUTPUT setted at staa-step.
 
       - name: Checkout repository from github
         if: true
         uses: actions/checkout@v4
         with:
+          # repository: vim/vim
           repository: svardew/vim
-          # ref: 9.0.2173
+          # ref: 9.0.2173, 2023-12-18
           ref: 062bb6b9099f4c92e10465e5ff98db092a3eac1b
           path: ./vim
 
@@ -54,51 +35,47 @@ jobs:
         with:
           ruby-version: ruby-3.3.0-rc1
 
-      - name: rb33env
+      - name: set ruby-3.3 environment values
         id: rb33env
         if: true
         run: |
-          echo 'list current dir after actions/checkout'
-          ls -1 -p
           echo '// which ruby and ruby version'
           which ruby
           ruby -v
           echo '// locate libruby.so.3.3'
           find /opt -name 'libruby.so*'
-          echo '// locate pkgconfig *.pc file'
+          echo '// locate pkgconfig file (ruby-x.x.pc)'
           ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")'
-          # echo '// set ld_library_path and pkg_config_path to GITHUB_ENV'
-          # str = $(ruby -rrbconfig -e 'puts Dir.glob(RbConfig::CONFIG["libdir"]+"/**/ruby*.pc")[0]')
-          # echo "rb33_pkgconfigpath=${str}" >> "$GITHUB_ENV"
-          # str = $(ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]')
-          # echo "rb33_ldlibrarypath=${str}" >> "$GITHUB_ENV"
           echo '// set ld_library_path and pkg_config_path to GITHUB_OUTPUTS'
-          echo "rb33_ldlibrarypath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]')" >> $GITHUB_OUTPUT
-          echo "rb33_pkgconfigpath=$(ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q<libdir>]+%q</pkgconfig>')" >> $GITHUB_OUTPUT
+          rb33libdir=$(ruby -rrbconfig -e 'print RbConfig::CONFIG[%q<libdir>]')
+          rb33pkgconfigdir=${rb33libdir}'/pkgconfig'
+          echo "rb33_ldlibrarypath=${rb33libdir}" >> $GITHUB_OUTPUT
+          echo "rb33_pkgconfigpath=${rb33pkgconfigdir}" >> $GITHUB_OUTPUT
 
-      - name: check ghoutputs
-        if: false
+      - name: check github_output values
+        if: true
         run: |
           echo ${{ steps.rb33env.outputs.rb33_pkgconfigpath }}, PKG_CONFIG_PATH
           echo ${{ steps.rb33env.outputs.rb33_ldlibrarypath }}, LD_LIBRARY_PATH
+          echo "force fail.."
+          /bin/false
 
       - name: prepare issue tests. Test_cmd_ruby_works, Test_ruby_nomethoderror_format
         run: |
-          touch test_yy1
-          echo "func Test_cmd_ruby_works()" >>  test_yy1
-          echo "  ruby 1+2+3"              >> test_yy1
-          echo "endfunc"                   >> test_yy1
-          mv test_yy1 test_yy1cmdrubywork.vim
-          touch test_yy2
-          echo "func Test_ruby_nomethoderror_format()" >>  test_yy2
-          echo "  call assert_fails('ruby print nil.hjkl'," >> test_yy2
-          # echo "  \           \"NoMethodError: undefined method `hjkl' for nil:NilClass\")" >> test_yy2
-          # ! %60/backtick, %5C/backslash, %22/doublequote
-          # ! sed -i 
-          echo "  %5C           %22NoMethodError: undefined method %60hjkl' for nil:NilClass%22)" >> test_yy2
-          echo "endfunc" >> test_yy2
-          sed -i 's:%5C:\\:g; s:%22:":g; s:%60:`:g' test_yy2
-          mv test_yy2 test_yy2nomethoderror.vim
+          echo "// these 2 test may fail"
+          touch test_yy1cmdrubywork.vim
+          cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > test_yy1cmdrubywork.vim
+          : func Test_cmd_ruby_works()
+          :   ruby 1+2+3
+          : endfunc
+          HERE_DOCU_MENT
+          touch test_yy2nomethoderror.vim
+          cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > test_yy2nomethoderror.vim
+          : func Test_ruby_nomethoderror_format()
+          :   call assert_fails('ruby print nil.hjkl',
+          :         \           "NoMethodError: undefined method `hjkl' for nil:NilClass")
+          : endfunc
+          HERE_DOCU_MENT
           echo "// cat 2 test file"
           cat test_yy1cmdrubywork.vim
           cat test_yy2nomethoderror.vim
@@ -141,54 +118,40 @@ jobs:
 
       - name: prepare patch for if_ruby.c, test_ruby.vim
         if: true
-        shell: bash +x {0}
+        shell: bash {0}
         run: |
-          # diff -u0 orig changed > patch-xxx
+          echo "// these 2 patch may fix"
+          # diff -U0 orig changed > patch-xxx
           # patch orig --input /path/to/patch-xxx
           touch patch-if_ruby
-          echo "--- ./if_ruby.c.orig"  >> ./patch-if_ruby
-          echo "+++ ./if_ruby.c.mod"  >> ./patch-if_ruby
-          echo "@@ -86 +86 @@"  >> ./patch-if_ruby
-          echo "-# if RUBY_VERSION >= 26"  >> ./patch-if_ruby
-          echo "+# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
-          echo "@@ -459 +459 @@"  >> ./patch-if_ruby
-          echo "-# if RUBY_VERSION >= 26"  >> ./patch-if_ruby
-          echo "+# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
-          echo "@@ -494 +494 @@"  >> ./patch-if_ruby
-          echo "-# if RUBY_VERSION >= 26"  >> ./patch-if_ruby
-          echo "+# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
-          echo "@@ -564 +564 @@"  >> ./patch-if_ruby
-          echo "-#  if RUBY_VERSION >= 26"  >> ./patch-if_ruby
-          echo "+#  if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
-          echo "@@ -721 +721 @@"  >> ./patch-if_ruby
-          echo "-# if RUBY_VERSION >= 26"  >> ./patch-if_ruby
-          echo "+# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32"  >> ./patch-if_ruby
-          # which sed
-          # sed --version
-          # which diff
-          # diff --version
-          echo '<aa'
-          sed '/NoMethodError/ s/nil:NilClass/nil/ ;' ./vim/src/testdir/test_ruby.vim > test_ruby.vim.mod
-          echo '<bb'
-          cat ./test_ruby.vim.mod
-          echo '<cc'
+          cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > patch-if_ruby
+          : --- ./if_ruby.c.orig
+          : +++ ./if_ruby.c.mod
+          : @@ -86 +86 @@
+          : -# if RUBY_VERSION >= 26
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
+          : @@ -459 +459 @@
+          : -# if RUBY_VERSION >= 26
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
+          : @@ -494 +494 @@
+          : -# if RUBY_VERSION >= 26
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
+          : @@ -564 +564 @@
+          : -#  if RUBY_VERSION >= 26
+          : +#  if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
+          : @@ -721 +721 @@
+          : -# if RUBY_VERSION >= 26
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
+          HERE_DOCU_MENT
           touch patch-test_ruby
-          echo '<dd diff return error code, need [set +x]'
-          # diff -U 1 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
-          md5sum ./vim/src/testdir/test_ruby.vim
-          md5sum ./test_ruby.vim.mod
-          diff ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod
-          echo "ok?"
-          echo '<ee'
-          echo '<ff'
-          cat patch-test_ruby
-          echo '<zz'
-          # rm ./test_ruby.vim.mod
+          touch test_ruby.vim.mod
+          sed '/NoMethodError/ s/nil:NilClass/nil/ ;' ./vim/src/testdir/test_ruby.vim > test_ruby.vim.mod
+          diff -U 0 ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod > patch-test_ruby
+          rm ./test_ruby.vim.mod
           echo "// cat patch-if_ruby"
           cat patch-if_ruby
-          # echo "// cat patch-test_ruby"
-
-          # cat patch-test_ruby
+          echo "// cat patch-test_ruby"
+          cat patch-test_ruby
 
       - name: build patched vim with static link rb33rc1, check if test_ruby.vim pass
         if: false
