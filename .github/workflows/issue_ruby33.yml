@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config: --disable-gui --disable-libsodium --with-features=normal
+        config: '--disable-gui --disable-libsodium --with-features=normal'
         interp: [yes, dynamic]
         patch: [nopatch, patched]
 
