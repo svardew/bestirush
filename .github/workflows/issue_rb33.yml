@@ -134,19 +134,19 @@ jobs:
           : +++ ./if_ruby.c.mod
           : @@ -86 +86 @@
           : -# if RUBY_VERSION >= 26
-          : +# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
           : @@ -459 +459 @@
           : -# if RUBY_VERSION >= 26
-          : +# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
           : @@ -494 +494 @@
           : -# if RUBY_VERSION >= 26
-          : +# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
           : @@ -564 +564 @@
           : -#  if RUBY_VERSION >= 26
-          : +#  if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
+          : +#  if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
           : @@ -721 +721 @@
           : -# if RUBY_VERSION >= 26
-          : +# if RUBY_VERSION >= 26 && RUBY_VERSION =< 32
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
           HERE_DOCU_MENT
           touch patch-test_ruby
           echo '- ruby3.3 change NoMethodError format. loose pattern in Test_ruby_Vim_buffer_get()'
