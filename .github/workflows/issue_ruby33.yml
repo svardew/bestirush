@@ -89,6 +89,7 @@ jobs:
         if: true
         shell: bash {0}
         run: |
+          touch ./src/testdir/test_yy_rb33issue.vim
           cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > ./src/testdir/test_yy_rb33issue.vim
           : "" Test ruby-3.3.0-rc1
           : 
