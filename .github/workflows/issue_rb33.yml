@@ -78,7 +78,7 @@ jobs:
           :         \           "NoMethodError: undefined method `hjkl' for nil:NilClass")
           : endfunc
           HERE_DOCU_MENT
-          echo "// cat 2 test file"
+          echo "// cat 2 test, 1 test per 1 file"
           cat test_yy1cmdrubywork.vim
           cat test_yy2nomethoderror.vim
 
@@ -95,7 +95,7 @@ jobs:
           cp ../test_yy*.vim ./src/testdir/
           export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
           export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
-          ./configure --disable-gui --disable-libsodium --enable-rubyinterp=yes
+          ./configure --disable-gui --disable-libsodium --with-features=normal --enable-rubyinterp=yes
           make
           cd src/testdir
           make test_yy1cmdrubywork.res
@@ -104,7 +104,7 @@ jobs:
           cat messages
 
       - name: build vim with dynamic link rb33rc1, test issue tests
-        if: false
+        if: true
         run: |
           mkdir vim-rb33dyn
           cd ./vim-rb33dyn
@@ -112,7 +112,7 @@ jobs:
           cp ../test_yy*.vim ./src/testdir/
           export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
           export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
-          ./configure --disable-gui --disable-libsodium --enable-rubyinterp=dynamic
+          ./configure --disable-gui --disable-libsodium --with-features=normal --enable-rubyinterp=dynamic
           make
           cd src/testdir
           make test_yy1cmdrubywork.res
@@ -160,16 +160,16 @@ jobs:
           cat patch-test_ruby
 
       - name: build patched vim with static link rb33rc1, check if test_ruby.vim pass
-        if: false
+        if: true
         run: |
           mkdir vim-rb33yes-patched
-          cp -R ./vim/* ./vim-rb33yes-patched
-          cd ./vim-rb33yes-patched/
+          cd vim-rb33yes-patched
+          cp -R ../vim/* ./
           patch src/if_ruby.c --input ../patch-if_ruby
           patch src/testdir/test_ruby.vim --input ../patch-test_ruby
           export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
           export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
-          ./configure --disable-gui --disable-libsodium --enable-rubyinterp=yes
+          ./configure --disable-gui --disable-libsodium --with-features=normal --enable-rubyinterp=yes
           make
           cd src/testdir
           make test_ruby.res
@@ -177,16 +177,16 @@ jobs:
           cat messages
 
       - name: build patched vim with dynamic link rb33rc1, check if test_ruby.vim pass
-        if: false
+        if: true
         run: |
           mkdir vim-rb33dyn-patched
-          cp -R ./vim/* ./vim-rb33dyn-patched
           cd ./vim-rb33dyn-patched/
+          cp -R ../vim/* ./
           patch src/if_ruby.c --input ../patch-if_ruby
           patch src/testdir/test_ruby.vim --input ../patch-test_ruby
           export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
           export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
-          ./configure --disable-gui --disable-libsodium --enable-rubyinterp=dynamic
+          ./configure --disable-gui --disable-libsodium --with-features=normal --enable-rubyinterp=dynamic
           make
           cd src/testdir
           make test_ruby.res
@@ -202,6 +202,17 @@ jobs:
           find . -type f -name '*.res'
           # echo "$rb33_pkgconfigpath"
           # echo "$rb33_ldlibrarypath"
+          echo "// appendix. ruby's NoMethodError format"
+          cat <<'RUBYSCRIPTHEREDOC' | sed 's,^:\ ,, ;' > show_nomethoderr.rb
+          : puts RUBY_VERSION
+          : ["text", Hash, nil].each do |obj|
+          :   begin; obj.xnomethodx
+          :   rescue => e; puts e
+          :   end
+          : end
+          RUBYSCRIPTHEREDOC
+          /opt/hostedtoolcache/Ruby/3.1.4/x64/bin/ruby show_nomethoderr.rb
+          /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/bin/ruby show_nomethoderr.rb
           echo '--- close [testruby] job. <<<' $PWD
 
 # vim: tw=2 :
