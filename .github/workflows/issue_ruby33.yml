@@ -1,0 +1,153 @@
+name: ruby-3.3.0-rc1 issue
+
+on: workflow_dispatch
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+
+  env:
+    # ref: v9.0.2138
+    REF: fda700cb04612fe2f9301a9ba820309175decabf
+
+  startegy:
+    fail-fast: false
+    matrix:
+      config: --disable-gui --disable-libsodium --with-features=normal
+      interp: [yes, dynamic]
+      patch: [nopatch, patched]
+
+    steps:
+      - name: Checkout vim
+        uses: actions/checkout@v4
+        with:
+          repository: svardew/vim
+          # ref: v9.0.2138
+          ref: ${{ env.REF }}
+          path: ./vim
+
+      - name: Install ruby-3.3.0-rc1
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ruby-3.3.0-rc1
+
+      - name: Set ruby-3.3 environment values
+        id: rb33env
+        if: true
+        run: |
+          which ruby
+          ruby -v
+          rb33libdir=$(ruby -rrbconfig -e 'print RbConfig::CONFIG["libdir"]')
+          rb33pkgconfigdir=${rb33libdir}'/pkgconfig'
+          echo "rb33_ldlibrarypath=${rb33libdir}" >> $GITHUB_OUTPUT
+          echo "rb33_pkgconfigpath=${rb33pkgconfigdir}" >> $GITHUB_OUTPUT
+
+      - name: Prepare patches
+        if: true
+        shell: bash {0}
+        run: |
+          echo '/* patch-if_ruby'
+          echo ' * ruby-3.3 remove transient_heap.'
+          echo ' * this patch disable rb_ary_detransient, etc.'
+          echo ' */'
+          touch patch-if_ruby
+          cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > patch-if_ruby
+          : --- ./if_ruby.c.orig
+          : +++ ./if_ruby.c.mod
+          : @@ -86 +86 @@
+          : -# if RUBY_VERSION >= 26
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
+          : @@ -459 +459 @@
+          : -# if RUBY_VERSION >= 26
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
+          : @@ -494 +494 @@
+          : -# if RUBY_VERSION >= 26
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
+          : @@ -564 +564 @@
+          : -#  if RUBY_VERSION >= 26
+          : +#  if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
+          : @@ -721 +721 @@
+          : -# if RUBY_VERSION >= 26
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
+          HERE_DOCU_MENT
+          #-- echo '/* patch-test_ruby'
+          #-- echo ' * ruby-3.3 change NoMethodError format.'
+          #-- echo ' * this patch loose pattern in Test_ruby_Vim_buffer_get()'
+          #-- echo ' */'
+          #-- touch patch-test_ruby
+          #-- touch test_ruby.vim.mod
+          #-- cp ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.orig
+          #-- sed '/NoMethodError/ s,nil:NilClass,nil, ;' ./test_ruby.vim.orig > test_ruby.vim.mod
+          #-- diff -U 0 ./test_ruby.vim.orig ./test_ruby.vim.mod > patch-test_ruby
+          #-- rm ./test_ruby.vim.*
+
+
+      - name: Prepare test for ruby-3.3
+        run: |
+          cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > ./src/testdir/test_yy_rb33issue.vim
+          : "" Test ruby-3.3.0-rc1
+          : 
+          : source check.vim
+          : CheckFeature ruby
+          : 
+          : func Test_ruby_command_work()
+          :   ruby puts RUBY_VERSION
+          : endfunc
+          : 
+          : func Test_ruby_nomethoderror_format_current()
+          :   call assert_fails('ruby print nil.hjkl',
+          :         \           "NoMethodError: undefined method `hjkl' for nil:NilClass")
+          : endfunc
+          : 
+          : func Test_ruby_nomethoderror_format_loose()
+          :   call assert_fails('ruby print nil.hjkl',
+          :         \           "NoMethodError: undefined method `hjkl' for nil")
+          : endfunc
+          HERE_DOCUMENT_VIMTEST
+
+
+      - name: configure, build
+        id: build
+        if: true
+        run: |
+          export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33_pkgconfigpath }}
+          export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
+          builddir=vim-${{ matrix.interp }}-${{ matrix.patch }}
+          mkdir $builddir
+          cd $builddir
+          cp -R ../vim/* ./
+          if ${{ matrix.patch }} == 'patched'; then
+            patch src/if_ruby.c --input ../patch-if_ruby
+          fi
+          ./configure ${{ matrix.config }} --enable-rubyinterp=${{ matrix.interp }}
+          make
+          ./src/vim --version
+          echo "builddir=${builddir}" >> $GITHUB_OUTPUT
+
+      - name: test
+        if: true
+        run: |
+          if ${{ matrix.interp }} == 'dynamic'; then
+            export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
+          fi
+          cd ${{ steps.build.outputs.builddir }}
+          cd ./src/testdir
+          make test_yy_rb33issue.res
+          echo '/* test_*.res exist?'
+          echo ' */'
+          ls '*.res' | wc -c
+          echo '/* cat messages'
+          echo ' */'
+          cat messages
+
+      - name: close
+        if: false
+        run: |
+          ls . -lahpgG
+
+
+
+          # vim: set tw=2 autoindent:
