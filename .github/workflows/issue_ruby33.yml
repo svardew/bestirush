@@ -121,7 +121,7 @@ jobs:
           mkdir $builddir
           cd $builddir
           cp -R ../vim/* ./
-          if ${{ matrix.patch }} == 'patched'; then
+          if ${{ matrix.patch == 'patched' }}; then
             patch src/if_ruby.c --input ../patch-if_ruby
           fi
           ./configure ${{ env.CONFIG }} --enable-rubyinterp=${{ matrix.interp }}
@@ -132,7 +132,7 @@ jobs:
       - name: test
         if: true
         run: |
-          if ${{ matrix.interp }} == 'dynamic'; then
+          if ${{ matrix.interp == 'dynamic' }}; then
             export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
           fi
           cd ${{ steps.build.outputs.builddir }}
