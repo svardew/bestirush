@@ -9,16 +9,16 @@ jobs:
   linux:
     runs-on: ubuntu-22.04
 
-  env:
-    # ref: v9.0.2138
-    REF: fda700cb04612fe2f9301a9ba820309175decabf
+    env:
+      # ref: v9.0.2138
+      REF: fda700cb04612fe2f9301a9ba820309175decabf
 
-  startegy:
-    fail-fast: false
-    matrix:
-      config: --disable-gui --disable-libsodium --with-features=normal
-      interp: [yes, dynamic]
-      patch: [nopatch, patched]
+    startegy:
+      fail-fast: false
+      matrix:
+        config: --disable-gui --disable-libsodium --with-features=normal
+        interp: [yes, dynamic]
+        patch: [nopatch, patched]
 
     steps:
       - name: Checkout vim
