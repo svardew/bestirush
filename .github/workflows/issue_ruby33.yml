@@ -6,7 +6,8 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  linux:
+  patch_linux:
+    id: patch_linux
     runs-on: ubuntu-22.04
     outputs:
       outputlog: ${{ steps.upload-artifact-log.outputs.artifact-id }}
@@ -51,6 +52,7 @@ jobs:
           echo "rb33_pkgconfigpath=${rb33pkgconfigdir}" >> $GITHUB_OUTPUT
 
       - name: Prepare patches and logdir
+        id: patches
         if: true
         shell: bash {0}
         run: |
@@ -90,10 +92,20 @@ jobs:
           diff -U 0 ./test_ruby.vim.orig ./test_ruby.vim.mod > patch-test_ruby
           rm ./test_ruby.vim.*
 
+      - uses: actions/upload-artifact@v4
+        id: upload-artifact-patches
+        needs: steps.patches
+        with:
+          compression-level: 0
+          retention-days: 5
+          path: |
+            ./patch-*
+
       - name: Prepare tests for ruby-3.3
         if: true
         shell: bash {0}
         run: |
+          # TODO: make 2 test. transient_heap issue, and nomethoderror format issue.
           touch test_yy_nomethoderror_current.vim
           cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_nomethoderror_current.vim
           : 
@@ -200,19 +212,20 @@ jobs:
         run: |
           ls . -lahpgG
 
-  summary:
-    needs: linux
+  patch_summary:
+    # check-2-patch-success-for-both-static-and-dynamic
+    needs: patch_linux
     runs-on: ubuntu-latest
     steps:
       - name: noop
         if: false
         run: /bin/false
 
-      - name: job-linux info
+      - name: job.patch_linux info
         env:
-          OUTPUTLOG: ${{ needs.linux.outputs.outputlog }}
+          OUTPUTLOG: ${{ needs.patch_linux.outputs.outputlog }}
         run: |
-          echo "Artifact ID from job.linux is [$OUTPUTLOG]"
+          echo "Artifact ID from job.patch_linux is [$OUTPUTLOG]"
 
       - uses: actions/download-artifact@v4
         with:
@@ -228,12 +241,36 @@ jobs:
         shell: bash {0}
         run: |
           cd ./logdir
-          ls . -1p
+          ls . -1lagGp
           echo '### matrix test result ...'
-          for d in vim-*
+          for f in messages-*
           do
-            echo '===' $d '==='
-            cat ${d}/src/testdir/messages | sed '/^\s*$/ d; /^From/ s:^:--> :'
+            echo '===' $f '==='
+            cat $f | sed '/^\s*$/ d; /^From/ s:^:--> :'
           done
+
+  # latest vim/vim with patch build check for linxu/mswin/macos
+  # copy-paste or reusable-workflow. read vim/vim/.gh/ci.yml
+  linux:
+    if: false
+    needs: [patch_linux, patch_summary]
+    runs-on: ubuntu-22.04
+    steps:
+      - run: ls .
+
+  mswin:
+    if: false
+    needs: [patch_linux, patch_summary]
+    runs-on: windows-latest
+    steps:
+      - run: dir .
+
+  macos:
+    if: false
+    needs: [patch_linux, patch_summary]
+    runs-on: macos-latest
+    steps:
+      - run: ls .
+
 
 # vim: set tw=2 autoindent fdm=marker fmr="\ {{{,\ }}}' :
