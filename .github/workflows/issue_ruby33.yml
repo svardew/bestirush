@@ -93,7 +93,8 @@ jobs:
           : 
           : func Test_ruby_nomethoderror_format_current()
           :   call assert_fails('ruby print nil.hjkl',
-          :         \           "NoMethodError: undefined method `hjkl' for nil:NilClass")
+          :         \           "NoMethodError: undefined method `hjkl' for nil:NilClass",
+          :         \           "this assert fails for [nopatch,+ruby][nopatch,+ruby/dyn]")
           : endfunc
           : 
           HERE_DOCUMENT_VIMTEST
@@ -103,7 +104,7 @@ jobs:
           : func Test_ruby_nomethoderror_format_ruby33_loose()
           :   call assert_fails('ruby print nil.hjkl',
           :         \           "NoMethodError: undefined method `hjkl' for nil",
-          :         \           "this assertion should pass for ruby-3.3")
+          :         \           "this assert fails for [nopatch,+ruby/dyn]")
           : endfunc
           : 
           HERE_DOCUMENT_VIMTEST
@@ -111,8 +112,12 @@ jobs:
           cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_rb_ary_detransient_missing.vim
           : 
           : func Test_ruby_rb_ary_detransient_missing()
-          :   call assert_fails('ruby puts RUBY_VERSION',
-          :         \           "E448: Could not load library function rb_ary_detransient")
+          :   try
+          :     ruby puts RUBY_VERSION
+          :   catch
+          :     call assert_exception("E448: Could not load library function rb_ary_detransient",
+          :               \           "expect E448 only for [nopatch,+ruby/dyn]")
+          :   endtry
           : endfunc
           : 
           HERE_DOCUMENT_VIMTEST
