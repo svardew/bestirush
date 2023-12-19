@@ -20,10 +20,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # interp: [yes, dynamic]
-        interp: [dynamic]
-        # patch: [nopatch, patched]
-        patch: [patched]
+        interp: [yes, dynamic]
+        # interp: [dynamic]
+        patch: [nopatch, patched]
+        # patch: [patched]
 
     steps:
       - name: Checkout vim
@@ -216,18 +216,19 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          path: .
+          path: ./logdir
 
       - name: Display all artifacts
         run: |
           ls -R
 
       - name: test summary
-        if: false
+        if: true
         shell: bash {0}
         run: |
           ls . -1p
           echo '### matrix test result ...'
+          cd ./logdir
           for d in vim-*
           do
             echo '===' $d '==='
