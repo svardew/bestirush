@@ -117,7 +117,7 @@ jobs:
           : 
           HERE_DOCUMENT_VIMTEST
 
-      - name: [matrix] configure, build
+      - name: matrix configure, build
         id: build
         if: true
         run: |
@@ -135,7 +135,7 @@ jobs:
           ./src/vim --version
           echo "builddir=${builddir}" >> $GITHUB_OUTPUT
 
-      - name: [matrix] test
+      - name: matrix test
         if: true
         run: |
           if ${{ matrix.interp == 'dynamic' }}; then
