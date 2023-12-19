@@ -23,6 +23,7 @@ jobs:
         if: true
         shell: bash {0}
         run: |
+          mkdir patch_and_test
           echo '/* File: patch-if_ruby'
           echo ' * ruby-3.3 remove transient_heap.'
           echo ' * this patch disable rb_ary_detransient, etc.'
@@ -57,6 +58,7 @@ jobs:
           sed -i '/NoMethodError/ s,nil:NilClass,nil, ;' ./test_ruby.vim.mod
           diff -U 0 ./test_ruby.vim.orig ./test_ruby.vim.mod > patch-test_ruby
           rm ./test_ruby.vim.*
+          mv patch-* ./patch_and_test
       - name: Prepare tests for ruby-3.3
         if: true
         shell: bash {0}
@@ -95,6 +97,7 @@ jobs:
           : endfunc
           : 
           HERE_DOCUMENT_VIMTEST
+          mv test_yy* ./patch_and_test
       - uses: actions/upload-artifact@v4
         id: upload-artifact-patches
         if: steps.patches.outcome == 'success'
@@ -102,8 +105,7 @@ jobs:
           compression-level: 0
           retention-days: 5
           path: |
-            ./patch-*
-            ./test_yy_*.vim
+            ./patch_and_test/
 
   patch_linux:
     needs: vim_patch
@@ -247,6 +249,11 @@ jobs:
         with:
           path: .
           merge-multiple: true
+
+      - name: check dl-artifact
+        run: |
+          ls -R pat*
+          /bin/false
 
       - name: matrix configure, build
         id: build
