@@ -180,6 +180,7 @@ jobs:
           ls . -lahpgG
 
   noop_job:
+    needs: linux
     runs-on: ubuntu-latest
     steps:
       - name: noop
