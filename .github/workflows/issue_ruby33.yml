@@ -166,26 +166,34 @@ jobs:
           cat messages | sed '/^\s*$/ d; /^From/ s:^:--> :' > messages-x
           mv messages-x ../../../logdir/messages-${{ matrix.interp }}-${{ matrix.patch }}
 
-      - name: test summary
-        if: steps.test.outcome == 'success'
-        shell: bash {0}
-        run: |
-          ls . -1p
-          echo '### matrix test result ...'
-          for d in vim-*
-          do
-            echo '===' $d '==='
-            cat ${d}/src/testdir/messages
-          done
-          # TODO: upload logs to artifact
-          ls ./logdir -lahgG
+        - uses: actions/upload-artifact@v4
+          with:
+            name: messages-artifact
+            compression-level: 0
+            retention-days: 5
+            path: |
+              ./logdir/
+
+# '      - name: test summary
+# '        if: steps.test.outcome == 'success'
+# '        shell: bash {0}
+# '        run: |
+# '          ls . -1p
+# '          echo '### matrix test result ...'
+# '          for d in vim-*
+# '          do
+# '            echo '===' $d '==='
+# '            cat ${d}/src/testdir/messages
+# '          done
+# '          # TODO: upload logs to artifact
+# '          ls ./logdir -lahgG
 
       - name: close
         if: false
         run: |
           ls . -lahpgG
 
-  noop_job:
+  summary:
     needs: linux
     runs-on: ubuntu-latest
     steps:
@@ -193,8 +201,17 @@ jobs:
         if: false
         run: /bin/false
 
+      - uses: actions/download-artifact@v4
+        name: Download all workflow run artifacts
+        # with:
+          # name: my-artifact
+
+      - name: list artifact
+        run: |
+          tree .
+
       - name: test summary
-        # if: false && steps.test.outcome == 'success'
+        if: false
         shell: bash {0}
         run: |
           ls . -1p
