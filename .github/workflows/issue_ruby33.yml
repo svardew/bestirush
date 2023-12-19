@@ -9,21 +9,24 @@ jobs:
   vim_patch:
     runs-on: ubuntu-latest
     env:
+      # ref: v9.0.2138
       REF: fda700cb04612fe2f9301a9ba820309175decabf
+
     steps:
+      - run: mkdir patch_and_test
+
       - name: Checkout vim
         uses: actions/checkout@v4
         with:
           repository: svardew/vim
-          # ref: v9.0.2138
           ref: ${{ env.REF }}
           path: ./vim
+
       - name: Prepare patches
         id: patches
         if: true
         shell: bash {0}
         run: |
-          mkdir patch_and_test
           echo '/* File: patch-if_ruby'
           echo ' * ruby-3.3 remove transient_heap.'
           echo ' * this patch disable rb_ary_detransient, etc.'
@@ -59,22 +62,16 @@ jobs:
           diff -U 0 ./test_ruby.vim.orig ./test_ruby.vim.mod > patch-test_ruby
           rm ./test_ruby.vim.*
           mv patch-* ./patch_and_test
-      - name: Prepare tests for ruby-3.3
+
+      - name: Prepare tests for ruby-3.3 issue
         id: tests
         if: true
         shell: bash {0}
         run: |
-          # TODO: make 2 test. transient_heap issue, and nomethoderror format issue.
-          touch test_yy_nomethoderror_current.vim
-          cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_nomethoderror_current.vim
-          : 
-          : func Test_ruby_nomethoderror_format_current()
-          :   call assert_fails('ruby print nil.hjkl',
-          :         \           "NoMethodError: undefined method `hjkl' for nil:NilClass",
-          :         \           "this assert fails for [nopatch,+ruby][nopatch,+ruby/dyn]")
-          : endfunc
-          : 
-          HERE_DOCUMENT_VIMTEST
+          echo '/* File: test_yy_loose_nomethoderror.vim'
+          echo ' * ruby-3.3 change NoMethodError format, cause test_ruby.vim fails.'
+          echo ' * this test check if loose pattern pass test or not.'
+          echo ' */'
           touch test_yy_nomethoderror_loose.vim
           cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_nomethoderror_loose.vim
           : 
@@ -85,6 +82,11 @@ jobs:
           : endfunc
           : 
           HERE_DOCUMENT_VIMTEST
+          echo '/* File: test_yy_rb_ary_detransient_missing.vim'
+          echo ' * ruby-3.3 remove transient heap from array.c.'
+          echo ' * +ruby/dyn with ruby-3.3 fails when do cmd `:ruby do-something`.'
+          echo ' * this test check if `:ruby do-something` success or error with ary_detrasient.'
+          echo ' */'
           touch test_yy_rb_ary_detransient_missing.vim
           cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_rb_ary_detransient_missing.vim
           : 
@@ -99,9 +101,12 @@ jobs:
           : 
           HERE_DOCUMENT_VIMTEST
           mv test_yy* ./patch_and_test
+
       - name: list patch and test
+        if: false
         run: |
           ls ./patch_and_test
+
       - uses: actions/upload-artifact@v4
         id: upload-artifact-patches
         if: steps.patches.outcome == 'success' && steps.tests.outcome == 'success'
@@ -132,11 +137,13 @@ jobs:
         # patch: [patched]
 
     steps:
+      - name: Prepare logdir to store and upload test result.
+        run: mkdir ${{ env.LOGDIR }}
+
       - name: Checkout vim
         uses: actions/checkout@v4
         with:
           repository: svardew/vim
-          # ref: v9.0.2138
           ref: ${{ env.REF }}
           path: ./vim
 
@@ -156,105 +163,14 @@ jobs:
           echo "rb33_ldlibrarypath=${rb33libdir}" >> $GITHUB_OUTPUT
           echo "rb33_pkgconfigpath=${rb33pkgconfigdir}" >> $GITHUB_OUTPUT
 
-      # name: Prepare patches and logdir
-      - name: logdir
-        id: patches
-        if: true
-        shell: bash {0}
-        run: |
-          if [ ! -d ${{ env.LOGDIR }} ]; then mkdir ${{ env.LOGDIR }}; fi
-          #=moveto-early-job= echo '/* File: patch-if_ruby'
-          #=moveto-early-job= echo ' * ruby-3.3 remove transient_heap.'
-          #=moveto-early-job= echo ' * this patch disable rb_ary_detransient, etc.'
-          #=moveto-early-job= echo ' */'
-          #=moveto-early-job= touch patch-if_ruby
-          #=moveto-early-job= cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > patch-if_ruby
-          #=moveto-early-job= : --- ./if_ruby.c.orig
-          #=moveto-early-job= : +++ ./if_ruby.c.mod
-          #=moveto-early-job= : @@ -86 +86 @@
-          #=moveto-early-job= : -# if RUBY_VERSION >= 26
-          #=moveto-early-job= : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
-          #=moveto-early-job= : @@ -459 +459 @@
-          #=moveto-early-job= : -# if RUBY_VERSION >= 26
-          #=moveto-early-job= : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
-          #=moveto-early-job= : @@ -494 +494 @@
-          #=moveto-early-job= : -# if RUBY_VERSION >= 26
-          #=moveto-early-job= : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
-          #=moveto-early-job= : @@ -564 +564 @@
-          #=moveto-early-job= : -#  if RUBY_VERSION >= 26
-          #=moveto-early-job= : +#  if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
-          #=moveto-early-job= : @@ -721 +721 @@
-          #=moveto-early-job= : -# if RUBY_VERSION >= 26
-          #=moveto-early-job= : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
-          #=moveto-early-job= HERE_DOCU_MENT
-          #=moveto-early-job= echo '/* File: patch-test_ruby'
-          #=moveto-early-job= echo ' * ruby-3.3 change NoMethodError format.'
-          #=moveto-early-job= echo ' * this patch loose pattern in Test_ruby_Vim_buffer_get()'
-          #=moveto-early-job= echo ' */'
-          #=moveto-early-job= touch patch-test_ruby
-          #=moveto-early-job= cp ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.orig
-          #=moveto-early-job= cp ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod
-          #=moveto-early-job= sed -i '/NoMethodError/ s,nil:NilClass,nil, ;' ./test_ruby.vim.mod
-          #=moveto-early-job= diff -U 0 ./test_ruby.vim.orig ./test_ruby.vim.mod > patch-test_ruby
-          #=moveto-early-job= rm ./test_ruby.vim.*
-
-      # =moveto-early-jobs=
-      - uses: actions/upload-artifact@v4
-        id: upload-artifact-patches
-        if: false && steps.patches.outcome == 'success'
-        with:
-          compression-level: 0
-          retention-days: 5
-          path: |
-            ./patch-*
-
-      # =moveto-early-jobs=
-      - name: Prepare tests for ruby-3.3
-        if: false
-        shell: bash {0}
-        run: |
-          # TODO: make 2 test. transient_heap issue, and nomethoderror format issue." {{{
-          touch test_yy_nomethoderror_current.vim
-          cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_nomethoderror_current.vim
-          : 
-          : func Test_ruby_nomethoderror_format_current()
-          :   call assert_fails('ruby print nil.hjkl',
-          :         \           "NoMethodError: undefined method `hjkl' for nil:NilClass",
-          :         \           "this assert fails for [nopatch,+ruby][nopatch,+ruby/dyn]")
-          : endfunc
-          : 
-          HERE_DOCUMENT_VIMTEST
-          touch test_yy_nomethoderror_loose.vim
-          cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_nomethoderror_loose.vim
-          : 
-          : func Test_ruby_nomethoderror_format_ruby33_loose()
-          :   call assert_fails('ruby print nil.hjkl',
-          :         \           "NoMethodError: undefined method `hjkl' for nil",
-          :         \           "this assert fails for [nopatch,+ruby/dyn]")
-          : endfunc
-          : 
-          HERE_DOCUMENT_VIMTEST
-          touch test_yy_rb_ary_detransient_missing.vim
-          cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_rb_ary_detransient_missing.vim
-          : 
-          : func Test_ruby_rb_ary_detransient_missing()
-          :   try
-          :     ruby puts RUBY_VERSION
-          :   catch
-          :     call assert_exception("E448: Could not load library function rb_ary_detransient",
-          :               \           "expect E448 only for [nopatch,+ruby/dyn]")
-          :   endtry
-          : endfunc
-          : 
-          HERE_DOCUMENT_VIMTEST
-          ### }}}'
-
-      - uses: actions/download-artifact@v4
+      - name: Download patch and test from Artifact
+        uses: actions/download-artifact@v4
         with:
           path: .
           merge-multiple: true
 
       - name: check dl-artifact
+        if: false
         run: |
           ls -R [a-uw-z]*
           #=> dl-artifact files is current dir, without upload time folder
@@ -271,6 +187,7 @@ jobs:
           cp -R ../vim/* ./
           if ${{ matrix.patch == 'patched' }}; then
             patch src/if_ruby.c --input ../patch-if_ruby
+            patch src/testdir/test_ruby.vim ../patch-test_ruby
           fi
           cp ../test_yy* ./src/testdir/
           ./configure ${{ env.CONFIG }} --enable-rubyinterp=${{ matrix.interp }}
@@ -286,11 +203,13 @@ jobs:
             export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
           fi
           cd ${{ steps.build.outputs.builddir }}
-          # cp ../test_yy_*.vim ./src/testdir
           cd ./src/testdir
           make test_yy_nomethoderror_current.res
           make test_yy_nomethoderror_loose.res
           make test_yy_rb_ary_detransient_missing.res
+          if ${{ matrix.patch == 'patched' }}; then
+            make test_ruby.res
+          fi
           echo '/* test_*.res exist?'
           echo ' */'
           ls -1 | grep -c -E 'test_.*.res$'
@@ -303,30 +222,16 @@ jobs:
       - uses: actions/upload-artifact@v4
         id: upload-artifact-log
         with:
-          name: messages-artifact-${{ matrix.interp }}-${{ matrix.patch }}
+          name: messages-${{ matrix.interp }}-${{ matrix.patch }}
           compression-level: 0
-          retention-days: 5
+          retention-days: 1
           path: |
             ./logdir/
 
       - name: Output artifact ID
+        if: false
         run: |
           echo ${{ steps.upload-artifact-log.outputs.artifact-id }}, at steps.upload-artifact-log
-
-      #=moveto-later-job:patch_summary
-      - name: test summary
-        if: false && steps.test.outcome == 'success'
-        shell: bash {0}
-        run: |
-          ls . -1p # " {{{
-          echo '### matrix test result ...'
-          for d in vim-*
-          do
-            echo '===' $d '==='
-            cat ${d}/src/testdir/messages
-          done
-          # TODO: upload logs to artifact
-          ls ./logdir -lahgG #  }}}'
 
       - name: close
         if: false
@@ -334,21 +239,24 @@ jobs:
           ls . -lahpgG
 
   patch_summary:
-    # check-2-patch-success-for-both-static-and-dynamic
+    # check patched +ruby and +ruby/dyn pass test_ruby.vim
     needs: patch_linux
     runs-on: ubuntu-latest
+
     steps:
       - name: noop
         if: false
         run: /bin/false
 
       - name: job.patch_linux info
+        if: false
         env:
           OUTPUTLOG: ${{ needs.patch_linux.outputs.outputlog }}
         run: |
           echo "Artifact ID from job.patch_linux is [$OUTPUTLOG]"
 
-      - uses: actions/download-artifact@v4
+      - name: Download messages from artifact.
+        uses: actions/download-artifact@v4
         with:
           path: ./logdir
           merge-multiple: true
@@ -357,7 +265,7 @@ jobs:
         run: |
           ls -R ./logdir
 
-      - name: test summary
+      - name: Show matrix test result
         if: true
         shell: bash {0}
         run: |
@@ -370,8 +278,8 @@ jobs:
             cat $f | sed '/^\s*$/ d; /^From/ s:^:--> :'
           done
 
-  # latest vim/vim with patch build check for linxu/mswin/macos
-  # copy-paste or reusable-workflow. read vim/vim/.gh/ci.yml
+  # TODO: run vim/vim/.github/workflow/ci.yml at own repository, for mswin/macos.
+  # modify vim/vim ci.yml to reusable-workflow
   linux:
     if: false
     needs: [patch_linux, patch_summary]
