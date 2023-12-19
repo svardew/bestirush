@@ -256,7 +256,7 @@ jobs:
 
       - name: check dl-artifact
         run: |
-          ls -R pat*
+          ls -R [a-uw-z]*
           /bin/false
 
       - name: matrix configure, build
