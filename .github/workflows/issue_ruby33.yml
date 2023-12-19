@@ -257,7 +257,7 @@ jobs:
       - name: check dl-artifact
         run: |
           ls -R [a-uw-z]*
-          /bin/false
+          #=> dl-artifact files is current dir, without upload time folder
 
       - name: matrix configure, build
         id: build
@@ -272,7 +272,7 @@ jobs:
           if ${{ matrix.patch == 'patched' }}; then
             patch src/if_ruby.c --input ../patch-if_ruby
           fi
-          cp ./test_yy* ./src/testdir/
+          cp ../test_yy* ./src/testdir/
           ./configure ${{ env.CONFIG }} --enable-rubyinterp=${{ matrix.interp }}
           make
           ./src/vim --version
