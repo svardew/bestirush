@@ -49,7 +49,7 @@ jobs:
         if: true
         shell: bash {0}
         run: |
-          echo '/* patch-if_ruby'
+          echo '/* File: patch-if_ruby'
           echo ' * ruby-3.3 remove transient_heap.'
           echo ' * this patch disable rb_ary_detransient, etc.'
           echo ' */'
@@ -73,45 +73,51 @@ jobs:
           : -# if RUBY_VERSION >= 26
           : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
           HERE_DOCU_MENT
-          #-- echo '/* patch-test_ruby'
-          #-- echo ' * ruby-3.3 change NoMethodError format.'
-          #-- echo ' * this patch loose pattern in Test_ruby_Vim_buffer_get()'
-          #-- echo ' */'
-          #-- touch patch-test_ruby
-          #-- touch test_ruby.vim.mod
-          #-- cp ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.orig
-          #-- sed '/NoMethodError/ s,nil:NilClass,nil, ;' ./test_ruby.vim.orig > test_ruby.vim.mod
-          #-- diff -U 0 ./test_ruby.vim.orig ./test_ruby.vim.mod > patch-test_ruby
-          #-- rm ./test_ruby.vim.*
+          echo '/* File: patch-test_ruby'
+          echo ' * ruby-3.3 change NoMethodError format.'
+          echo ' * this patch loose pattern in Test_ruby_Vim_buffer_get()'
+          echo ' */'
+          touch patch-test_ruby
+          cp ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.orig
+          cp ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod
+          sed -i '/NoMethodError/ s,nil:NilClass,nil, ;' ./test_ruby.vim.mod
+          diff -U 0 ./test_ruby.vim.orig ./test_ruby.vim.mod > patch-test_ruby
+          rm ./test_ruby.vim.*
 
-
-      - name: Prepare test for ruby-3.3
+      - name: Prepare tests for ruby-3.3
         if: true
         shell: bash {0}
         run: |
-          touch test_yy_rb33issue.vim
-          cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_rb33issue.vim
-          : "" Test ruby-3.3.0-rc1
-          : 
-          : source check.vim
-          : CheckFeature ruby
-          : 
-          : func Test_ruby_command_work()
-          :   ruby puts RUBY_VERSION
-          : endfunc
+          touch test_yy_nomethoderror_current.vim
+          cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_nomethoderror_current.vim
           : 
           : func Test_ruby_nomethoderror_format_current()
           :   call assert_fails('ruby print nil.hjkl',
           :         \           "NoMethodError: undefined method `hjkl' for nil:NilClass")
           : endfunc
           : 
-          : func Test_ruby_nomethoderror_format_loose()
+          HERE_DOCUMENT_VIMTEST
+          touch test_yy_nomethoderror_loose.vim
+          cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_nomethoderror_loose.vim
+          : 
+          : func Test_ruby_nomethoderror_format_ruby33_loose()
           :   call assert_fails('ruby print nil.hjkl',
-          :         \           "NoMethodError: undefined method `hjkl' for nil")
+          :         \           "NoMethodError: undefined method `hjkl' for nil",
+          :         \           "this assertion should pass for ruby-3.3")
           : endfunc
+          : 
+          HERE_DOCUMENT_VIMTEST
+          touch test_yy_rb_ary_detransient_missing.vim
+          cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_rb_ary_detransient_missing.vim
+          : 
+          : func Test_ruby_rb_ary_detransient_missing()
+          :   call assert_fails('ruby puts RUBY_VERSION',
+          :         \           "E448: Could not load library function rb_ary_detransient")
+          : endfunc
+          : 
           HERE_DOCUMENT_VIMTEST
 
-      - name: configure, build
+      - name: [matrix] configure, build
         id: build
         if: true
         run: |
@@ -129,28 +135,45 @@ jobs:
           ./src/vim --version
           echo "builddir=${builddir}" >> $GITHUB_OUTPUT
 
-      - name: test
+      - name: [matrix] test
         if: true
         run: |
           if ${{ matrix.interp == 'dynamic' }}; then
             export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33_ldlibrarypath }}
           fi
           cd ${{ steps.build.outputs.builddir }}
-          cp ../test_yy_rb33issue.vim ./src/testdir
+          cp ../test_yy_*.vim ./src/testdir
           cd ./src/testdir
-          make test_yy_rb33issue.res
+          make test_yy_nomethoderror_current.res
+          make test_yy_nomethoderror_loose.res
+          make test_yy_rb_ary_detransient_missing.res
           echo '/* test_*.res exist?'
           echo ' */'
-          ls '*.res' | wc -c
+          ls -1 | grep -c -E 'test_.*.res$'
           echo '/* cat messages'
           echo ' */'
           cat messages
+
+      - name: test summary
+        if: steps.test.outcome == 'success'
+        run: |
+          echo '### matrix test result ...'
+          for d in vim-*
+          do
+            echo '===' $d '==='
+            cat ${d}/src/testdir/messages
+          done
 
       - name: close
         if: false
         run: |
           ls . -lahpgG
 
+  noop_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: noop
+        if: false
+        run: /bin/false
 
-
-          # vim: set tw=2 autoindent:
+# vim: set tw=2 autoindent:
