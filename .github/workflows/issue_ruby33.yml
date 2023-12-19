@@ -182,7 +182,7 @@ jobs:
           echo ${{ steps.upload-artifact-log.outputs.artifact-id }}, at steps.upload-artifact-log
 
       - name: test summary
-        if: false && steps.test.outcome == 'success' # {{{
+        if: false && steps.test.outcome == 'success'
         shell: bash {0}
         run: |
           ls . -1p
@@ -193,7 +193,7 @@ jobs:
             cat ${d}/src/testdir/messages
           done
           # TODO: upload logs to artifact
-          ls ./logdir -lahgG # }}}
+          ls ./logdir -lahgG
 
       - name: close
         if: false
@@ -217,18 +217,19 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: ./logdir
+          merge-multiple: true
 
       - name: Display all artifacts
         run: |
-          ls -R
+          ls -R ./logdir
 
       - name: test summary
         if: true
         shell: bash {0}
         run: |
+          cd ./logdir
           ls . -1p
           echo '### matrix test result ...'
-          cd ./logdir
           for d in vim-*
           do
             echo '===' $d '==='
