@@ -70,22 +70,21 @@ jobs:
         run: |
           echo '/* File: test_yy_loose_nomethoderror.vim'
           echo ' * ruby-3.3 change NoMethodError format, cause test_ruby.vim fails.'
-          echo ' * this test check if loose pattern pass test or not.'
+          echo ' * this test check if loose pattern match new Error message.'
           echo ' */'
           touch test_yy_nomethoderror_loose.vim
           cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_nomethoderror_loose.vim
           : 
           : func Test_ruby_nomethoderror_format_ruby33_loose()
           :   call assert_fails('ruby print nil.hjkl',
-          :         \           "NoMethodError: undefined method `hjkl' for nil",
-          :         \           "this assert fails for [nopatch,+ruby/dyn]")
+          :         \           "NoMethodError: undefined method `hjkl' for nil")
           : endfunc
           : 
           HERE_DOCUMENT_VIMTEST
           echo '/* File: test_yy_rb_ary_detransient_missing.vim'
           echo ' * ruby-3.3 remove transient heap from array.c.'
           echo ' * +ruby/dyn with ruby-3.3 fails when do cmd `:ruby do-something`.'
-          echo ' * this test check if `:ruby do-something` success or error with ary_detrasient.'
+          echo ' * this test check if `:ruby do-something` success or error with rb_ary_detrasient.'
           echo ' */'
           touch test_yy_rb_ary_detransient_missing.vim
           cat <<'HERE_DOCUMENT_VIMTEST' | sed 's/^:\ //' > test_yy_rb_ary_detransient_missing.vim
@@ -281,9 +280,11 @@ jobs:
           done
 
   linux-all:
-  # WIP: ci-for-linux from vim/vim/.github/workflow/ci.yml, build all linux #" {{{
-    needs: patch_summary
+    if: false
     runs-on: ubuntu-22.04
+    needs: patch_summary
+  # WIP: ci-for-linux from vim/vim/.github/workflow/ci.yml, build all linux #" {{{
+  # TODO: modify interpreter use action/setup-foo, not system-package apps...
 
     env:
       CC: ${{ matrix.compiler }}
