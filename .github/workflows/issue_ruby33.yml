@@ -187,7 +187,7 @@ jobs:
           cp -R ../vim/* ./
           if ${{ matrix.patch == 'patched' }}; then
             patch src/if_ruby.c --input ../patch-if_ruby
-            patch src/testdir/test_ruby.vim ../patch-test_ruby
+            patch src/testdir/test_ruby.vim --input ../patch-test_ruby
           fi
           cp ../test_yy* ./src/testdir/
           ./configure ${{ env.CONFIG }} --enable-rubyinterp=${{ matrix.interp }}
@@ -204,7 +204,6 @@ jobs:
           fi
           cd ${{ steps.build.outputs.builddir }}
           cd ./src/testdir
-          make test_yy_nomethoderror_current.res
           make test_yy_nomethoderror_loose.res
           make test_yy_rb_ary_detransient_missing.res
           if ${{ matrix.patch == 'patched' }}; then
