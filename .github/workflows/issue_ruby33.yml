@@ -13,6 +13,7 @@ jobs:
       # ref: v9.0.2138
       REF: fda700cb04612fe2f9301a9ba820309175decabf
       CONFIG: "--disable-gui --disable-libsodium --with-features=normal"
+      LOGDIR: ./logdir
 
     strategy:
       fail-fast: false
@@ -47,10 +48,11 @@ jobs:
           echo "rb33_ldlibrarypath=${rb33libdir}" >> $GITHUB_OUTPUT
           echo "rb33_pkgconfigpath=${rb33pkgconfigdir}" >> $GITHUB_OUTPUT
 
-      - name: Prepare patches
+      - name: Prepare patches and logdir
         if: true
         shell: bash {0}
         run: |
+          if [ ! -d ${{ env.LOGDIR }} ]; then mkdir ${{ env.LOGDIR }}; fi
           echo '/* File: patch-if_ruby'
           echo ' * ruby-3.3 remove transient_heap.'
           echo ' * this patch disable rb_ary_detransient, etc.'
@@ -161,9 +163,11 @@ jobs:
           echo '/* cat messages'
           echo ' */'
           cat messages
+          cat messages | sed '/^\s*$/ d; /^From/ s:^:--> :' > messages-x
+          mv messages-x ../../../logdir/messages-${{ matrix.interp }}-${{ matrix.patch }}
 
       - name: test summary
-        if: false && steps.test.outcome == 'success'
+        if: steps.test.outcome == 'success'
         shell: bash {0}
         run: |
           ls . -1p
@@ -173,6 +177,8 @@ jobs:
             echo '===' $d '==='
             cat ${d}/src/testdir/messages
           done
+          # TODO: upload logs to artifact
+          ls ./logdir -lahgG
 
       - name: close
         if: false
