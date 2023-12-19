@@ -168,32 +168,32 @@ jobs:
           cat messages | sed '/^\s*$/ d; /^From/ s:^:--> :' > messages-x
           mv messages-x ../../../logdir/messages-${{ matrix.interp }}-${{ matrix.patch }}
 
-        - uses: actions/upload-artifact@v4
-          id: upload-artifact-log
-          with:
-            name: messages-artifact
-            compression-level: 0
-            retention-days: 5
-            path: |
-              ./logdir/
+      - uses: actions/upload-artifact@v4
+        id: upload-artifact-log
+        with:
+          name: messages-artifact
+          compression-level: 0
+          retention-days: 5
+          path: |
+            ./logdir/
 
-        - name: Output artifact ID
-          run: |
-            echo ${{ steps.upload-artifact-log.outputs.artifact-id }}, at steps.upload-artifact-log
+      - name: Output artifact ID
+        run: |
+          echo ${{ steps.upload-artifact-log.outputs.artifact-id }}, at steps.upload-artifact-log
 
-# '      - name: test summary
-# '        if: steps.test.outcome == 'success'
-# '        shell: bash {0}
-# '        run: |
-# '          ls . -1p
-# '          echo '### matrix test result ...'
-# '          for d in vim-*
-# '          do
-# '            echo '===' $d '==='
-# '            cat ${d}/src/testdir/messages
-# '          done
-# '          # TODO: upload logs to artifact
-# '          ls ./logdir -lahgG
+      - name: test summary
+        if: false && steps.test.outcome == 'success'
+        shell: bash {0}
+        run: |
+          ls . -1p
+          echo '### matrix test result ...'
+          for d in vim-*
+          do
+            echo '===' $d '==='
+            cat ${d}/src/testdir/messages
+          done
+          # TODO: upload logs to artifact
+          ls ./logdir -lahgG
 
       - name: close
         if: false
