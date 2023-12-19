@@ -288,7 +288,7 @@ jobs:
           cd ${{ steps.build.outputs.builddir }}
           # cp ../test_yy_*.vim ./src/testdir
           cd ./src/testdir
-          make test_yy_NOMETHODError_current.res
+          make test_yy_nomethoderror_current.res
           make test_yy_nomethoderror_loose.res
           make test_yy_rb_ary_detransient_missing.res
           echo '/* test_*.res exist?'
