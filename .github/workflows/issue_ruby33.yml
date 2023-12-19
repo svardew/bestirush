@@ -163,7 +163,7 @@ jobs:
           cat messages
 
       - name: test summary
-        if: steps.test.outcome == 'success'
+        if: false && steps.test.outcome == 'success'
         shell: bash {0}
         run: |
           ls . -1p
@@ -186,5 +186,17 @@ jobs:
       - name: noop
         if: false
         run: /bin/false
+
+      - name: test summary
+        # if: false && steps.test.outcome == 'success'
+        shell: bash {0}
+        run: |
+          ls . -1p
+          echo '### matrix test result ...'
+          for d in vim-*
+          do
+            echo '===' $d '==='
+            cat ${d}/src/testdir/messages | sed '/^\s*$/ d; /^From/ s:^:--> :'
+          done
 
 # vim: set tw=2 autoindent:
