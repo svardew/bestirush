@@ -346,7 +346,10 @@ jobs:
     steps:
       - name: Checkout repository from github
         uses: actions/checkout@v4
+        with:
+          repository: svardew/vim
 
+      ###
       - name: PATCH, mkdir patch_and_test
         run: |
           mkdir patch_and_test
