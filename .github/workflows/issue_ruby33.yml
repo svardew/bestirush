@@ -17,8 +17,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        interp: [yes, dynamic]
-        patch: [nopatch, patched]
+        # interp: [yes, dynamic]
+        interp: [dynamic]
+        # patch: [nopatch, patched]
+        patch: [patched]
 
     steps:
       - name: Checkout vim
@@ -141,6 +143,7 @@ jobs:
           echo "builddir=${builddir}" >> $GITHUB_OUTPUT
 
       - name: matrix test
+        id: test
         if: true
         run: |
           if ${{ matrix.interp == 'dynamic' }}; then
@@ -161,7 +164,9 @@ jobs:
 
       - name: test summary
         if: steps.test.outcome == 'success'
+        shell: bash {0}
         run: |
+          ls . -1p
           echo '### matrix test result ...'
           for d in vim-*
           do
