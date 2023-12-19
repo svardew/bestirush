@@ -8,6 +8,8 @@ permissions:
 jobs:
   linux:
     runs-on: ubuntu-22.04
+    outputs:
+      outputlog: ${{ steps.upload-artifact-log.outputs.artifact-id }}
 
     env:
       # ref: v9.0.2138
@@ -167,12 +169,17 @@ jobs:
           mv messages-x ../../../logdir/messages-${{ matrix.interp }}-${{ matrix.patch }}
 
         - uses: actions/upload-artifact@v4
+          id: upload-artifact-log
           with:
             name: messages-artifact
             compression-level: 0
             retention-days: 5
             path: |
               ./logdir/
+
+        - name: Output artifact ID
+          run: |
+            echo ${{ steps.upload-artifact-log.outputs.artifact-id }}, at steps.upload-artifact-log
 
 # '      - name: test summary
 # '        if: steps.test.outcome == 'success'
@@ -201,14 +208,19 @@ jobs:
         if: false
         run: /bin/false
 
-      - uses: actions/download-artifact@v4
-        name: Download all workflow run artifacts
-        # with:
-          # name: my-artifact
-
-      - name: list artifact
+      - name: job-linux info
+        env:
+          OUTPUTLOG: ${{ needs.linux.outputs.outputlog }}
         run: |
-          tree .
+          echo "Artifact ID from job.linux is [$OUTPUTLOG]"
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: .
+
+      - name: Display all artifacts
+        run: |
+          ls -R
 
       - name: test summary
         if: false
