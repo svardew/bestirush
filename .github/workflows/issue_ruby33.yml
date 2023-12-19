@@ -60,6 +60,7 @@ jobs:
           rm ./test_ruby.vim.*
           mv patch-* ./patch_and_test
       - name: Prepare tests for ruby-3.3
+        id: tests
         if: true
         shell: bash {0}
         run: |
@@ -98,9 +99,12 @@ jobs:
           : 
           HERE_DOCUMENT_VIMTEST
           mv test_yy* ./patch_and_test
+      - name: list patch and test
+        run: |
+          ls ./patch_and_test
       - uses: actions/upload-artifact@v4
         id: upload-artifact-patches
-        if: steps.patches.outcome == 'success'
+        if: steps.patches.outcome == 'success' && stesps.tests.outcome == 'success'
         with:
           compression-level: 0
           retention-days: 5
