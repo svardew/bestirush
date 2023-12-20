@@ -111,9 +111,9 @@ jobs:
           fi
           cd ./vim/src/testdir
           make test_ruby.res
-          echo '/* test_*.res exist?'
+          echo '/* test_*.res count. if 0, no test success'
           echo ' */'
-          ls -1 | grep -c -E 'test_.*.res$'
+          find . -maxdepth 1 -type f -name 'test_*.res' | wc -l
           echo '/* cat messages'
           echo ' */'
           cat messages
@@ -157,3 +157,4 @@ jobs:
           echo " */"
 
 # vim: set tw=2 autoindent fdm=marker :
+
