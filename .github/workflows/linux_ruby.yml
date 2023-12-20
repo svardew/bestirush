@@ -1,4 +1,4 @@
-name: ruby-3.3.0-rc1 issue
+name: linux_ruby_github_ci
 
 on: workflow_dispatch
 
