@@ -280,7 +280,7 @@ jobs:
           done
 
   linux-all:
-    if: false
+    if: true
     runs-on: ubuntu-22.04
     needs: patch_summary
   # WIP: ci-for-linux from vim/vim/.github/workflow/ci.yml, build all linux #" {{{
