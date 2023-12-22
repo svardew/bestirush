@@ -173,7 +173,7 @@ jobs:
           ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]' | sudo tee /etc/ld.so.conf.d/vim_ruby33.conf
           sudo ldconfig
           ldconfig -p
-          /bin/false
+          # /bin/false
 
       - name: Set up environment
         run: |
@@ -307,6 +307,18 @@ jobs:
           "${SRCDIR}"/vim --version
           "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-1.vim -c quit
           "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-2.vim -c quit
+
+      - name: Test test_ruby
+        shell: bash {0}
+        run: |
+          cd "${SRCDIR}"/testdir
+          make test_ruby.res
+          echo "/* test_ruby.res?"
+          echo " */"
+          find . -name test_ruby.res | wc -l
+          echo "/* messages"
+          echo " */"
+          if [ -f messages ]; then cat messages ;fi
 
       # - name: Test
       # - name: Vim tags
