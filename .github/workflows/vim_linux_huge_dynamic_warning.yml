@@ -85,13 +85,15 @@ jobs:
       - name: repo, ref from workflow_dispatch
         id: repository
         run: |
-          repo='vim/vim'
-          ref=''
-          if [ $(wc -c <<<${{ inputs.ref }}) -eq 41 ] && $(sed 's:[a-f0-9A-F]::g' <<<${{ inputs.ref }}) == '' ]
-          then; ref=${{ inputs.ref }}
+          repo=${{ inputs.repo }}
+          ref=${{ inputs.ref }}
+          if [ $(echo $ref | wc -c) -eq 41 ] && $(echo $ref | sed 's:[a-f0-9A-F]::g') == '' ]
+          then ref=${{ inputs.ref }}
+          else ref=''
           fi
-          if [ ${{ inputs.repo }} =~ ^[a-z0-9A-Z_].+/[a-z0-9A-Z].+$ ] && [ $(sed 's:[a-zA-Z0-9_.]::g') == '' ]
-          then; repo=${{ inputs.repo }}
+          if [ $repo =~ ^[a-z0-9A-Z_].+/[a-z0-9A-Z].+$ ] && [ $(echo $repo | sed 's:[a-zA-Z0-9_.]::g') == '' ]
+          then repo=${{ inputs.repo }}
+          else repo=''
           fi
           echo "ref=${ref}" >> $GITHUB_OUTPUT
           echo "repo=${repo}" >> $GITHUB_OUTPUT
