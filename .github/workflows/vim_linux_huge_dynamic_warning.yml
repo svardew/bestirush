@@ -158,6 +158,19 @@ jobs:
           sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-${{ env.CLANG_VER }} 100
           sudo update-alternatives --install /usr/bin/asan_symbolize asan_symbolize /usr/bin/asan_symbolize-${{ env.CLANG_VER }} 100
 
+      - name: Install ruby 3.3.0
+        uses: ruby/setup-ruby@v1
+        with:
+           ruby-version: ruby-3.3.0-rc1
+      - name: Setup ld.so.conf for ruby 3.3.0
+        run: |
+          which ruby
+          ruby -v
+          ruby -rrbconfig -e 'puts d=RbConfig::CONFIG["libdir"]; puts Dir.glob(d+"/*")'
+          cat /etc/ld.so.conf
+          ls /etc/ld.so.conf.d
+          /bin/false
+
       - name: Set up environment
         run: |
           mkdir -p "${LOG_DIR}"
@@ -266,6 +279,7 @@ jobs:
 #--           rb33pkgconfigdir=${rb33libdir}'/pkgconfig'
 #--           echo "rb33_ldlibrarypath=${rb33libdir}" >> $GITHUB_OUTPUT
 #--           echo "rb33_pkgconfigpath=${rb33pkgconfigdir}" >> $GITHUB_OUTPUT}}}
+# current huge configure, ruby/dyn is 2of5, in [huge,clang,native] and [huge,gcc,uchar,testgui,true,dynamic]
 
       - name: Configure
         run: |
