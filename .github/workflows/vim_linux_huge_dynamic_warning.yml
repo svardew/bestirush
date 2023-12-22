@@ -1,0 +1,304 @@
+name: vim-linux-huge-ciwarnings
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        type: string
+      ref:
+        type: string
+
+# Cancels all previous workflow runs for pull requests that have not completed.
+concurrency:
+  # The concurrency group contains the workflow name and the branch name for
+  # pull requests or the commit hash for any other events.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+
+    env:
+      CC: ${{ matrix.compiler }}
+      GCC_VER: 13
+      CLANG_VER: 17
+      TEST: test
+      SRCDIR: ./src
+      LEAK_CFLAGS: -DEXITFREE
+      LOG_DIR: ${{ github.workspace }}/logs
+      TERM: xterm
+      DISPLAY: ':99'
+      DEBIAN_FRONTEND: noninteractive
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ### features: [tiny, normal, huge]
+        features: [huge]
+        compiler: [clang, gcc]
+        extra: [[]]
+        # Only use non-native architecture when features != huge.
+        # features=huge tries to install python3-dev, which fails to install
+        # for the non-native architecture.
+        architecture: [native]
+        include:
+          # - features: tiny
+          #   compiler: clang
+          #   extra: [nogui]
+          # - features: tiny
+          #   compiler: gcc
+          #   extra: [nogui]
+          # - features: normal
+          #   shadow: ./src/shadow
+          #   compiler: gcc
+          #   architecture: i386
+          - features: huge
+            coverage: true
+          - features: huge
+            compiler: clang
+            interface: dynamic
+            python3: stable-abi
+          - features: huge
+            compiler: gcc
+            coverage: true
+            interface: dynamic
+            extra: [uchar, testgui]
+          - features: huge
+            compiler: clang
+            # Lua5.1 is the most widely used version (since it's what LuaJIT is
+            # compatible with), so ensure it works
+            lua_ver: '5.1'
+            extra: [asan]
+          - features: huge
+            compiler: gcc
+            coverage: true
+            extra: [unittests]
+          # - features: normal
+          #   compiler: gcc
+          #   extra: [vimtags]
+
+    steps:
+      - name: repo, ref from workflow_dispatch
+        id: repository
+        run: |
+          repo = 'vim/vim'
+          ref = ''
+          if [ $(wc -c <<<${{ inputs.ref }}) -eq 41 ] && $(sed 's:[a-f0-9A-F]::g' <<<${{ inputs.ref }}) == '' ]
+          then; ref = ${{ inputs.ref }}
+          fi
+          if [ ${{ inputs.repo }} =~ ^[a-z0-9A-Z_].+/[a-z0-9A-Z].+$ ] && [ $(sed 's:[a-zA-Z0-9_.]::g') == '' ]
+          then; repo = ${{ inputs.repo }}
+          fi
+          echo "ref=${ref}" >> $GITHUB_OUTPUT
+          echo "repo=${repo}" >> $GITHUB_OUTPUT
+
+      - name: Checkout repository from github
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.repository.outputs.repo }}
+          ref: ${{ steps.repository.outputs.ref }}
+
+      - name: Check Filelist (for packaging)
+        run: |
+          # If any files in the repository are not listed in Filelist this will
+          # exit with an error code and list the missing entries.
+          make -f ci/unlisted.make
+
+      - run: sudo dpkg --add-architecture i386
+        if: matrix.architecture == 'i386'
+
+      - name: Install packages
+        run: |
+          PKGS=( \
+            gettext \
+            libgtk2.0-dev:${{ matrix.architecture }} \
+            desktop-file-utils \
+            libtool-bin \
+            libncurses-dev:${{ matrix.architecture }} \
+            libxt-dev:${{ matrix.architecture }} \
+          )
+          if ${{ matrix.features == 'huge' }}; then
+            LUA_VER=${{ matrix.lua_ver || '5.4' }}
+            PKGS+=( \
+              autoconf \
+              gdb \
+              lcov \
+              libcanberra-dev \
+              libperl-dev \
+              python2-dev \
+              python3-dev \
+              liblua${LUA_VER}-dev \
+              lua${LUA_VER} \
+              ruby-dev \
+              tcl-dev \
+              cscope \
+              libsodium-dev \
+              attr \
+              libattr1-dev
+            )
+          fi
+          sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
+
+      - name: Install gcc-${{ env.GCC_VER }}
+        if:  matrix.compiler == 'gcc'
+        run: |
+          sudo apt-get install -y gcc-${{ env.GCC_VER }}:${{ matrix.architecture }}
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ env.GCC_VER }} 100
+          sudo update-alternatives --set gcc /usr/bin/gcc-${{ env.GCC_VER }}
+
+      - name: Install clang-${{ env.CLANG_VER }}
+        if: matrix.compiler == 'clang'
+        run: |
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          . /etc/lsb-release
+          sudo add-apt-repository -y "deb http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-${{ env.CLANG_VER }} main"
+          sudo apt-get install -y clang-${{ env.CLANG_VER }} llvm-${{ env.CLANG_VER }}
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${{ env.CLANG_VER }} 100
+          sudo update-alternatives --set clang /usr/bin/clang-${{ env.CLANG_VER }}
+          sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-${{ env.CLANG_VER }} 100
+          sudo update-alternatives --install /usr/bin/asan_symbolize asan_symbolize /usr/bin/asan_symbolize-${{ env.CLANG_VER }} 100
+
+      - name: Set up environment
+        run: |
+          mkdir -p "${LOG_DIR}"
+          mkdir -p "${HOME}/bin"
+          echo "${HOME}/bin" >> $GITHUB_PATH
+          (
+          echo "LINUX_VERSION=$(uname -r)"
+          echo "NPROC=$(getconf _NPROCESSORS_ONLN)"
+          echo "TMPDIR=${{ runner.temp }}"
+
+          case "${{ matrix.features }}" in
+          tiny)
+            echo "TEST=testtiny"
+            if ${{ contains(matrix.extra, 'nogui') }}; then
+              echo "CONFOPT=--disable-gui"
+            fi
+            ;;
+          normal)
+            ;;
+          huge)
+            echo "TEST=scripttests test_libvterm"
+            INTERFACE=${{ matrix.interface || 'yes' }}
+            if ${{ matrix.python3 == 'stable-abi' }}; then
+              PYTHON3_CONFOPT="--with-python3-stable-abi=3.8"
+            fi
+            echo "CONFOPT=--enable-perlinterp=${INTERFACE} --enable-pythoninterp=${INTERFACE} --enable-python3interp=${INTERFACE} --enable-rubyinterp=${INTERFACE} --enable-luainterp=${INTERFACE} --enable-tclinterp=${INTERFACE} ${PYTHON3_CONFOPT}"
+            ;;
+          esac
+
+          if ${{ matrix.coverage == true }}; then
+            CFLAGS="${CFLAGS} --coverage -DUSE_GCOV_FLUSH"
+            echo "LDFLAGS=--coverage"
+          fi
+          if ${{ contains(matrix.extra, 'uchar') }}; then
+            CFLAGS="${CFLAGS} -funsigned-char"
+          fi
+          if ${{ contains(matrix.extra, 'testgui') }}; then
+            echo "TEST=-C src testgui"
+          fi
+          if ${{ contains(matrix.extra, 'unittests') }}; then
+            echo "TEST=unittests"
+          fi
+          if ${{ contains(matrix.extra, 'asan') }}; then
+            echo "SANITIZER_CFLAGS=-g -O1 -DABORT_ON_INTERNAL_ERROR -DEXITFREE -fsanitize-recover=all -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer"
+            echo "ASAN_OPTIONS=print_stacktrace=1 log_path=${LOG_DIR}/asan"
+            echo "UBSAN_OPTIONS=print_stacktrace=1 log_path=${LOG_DIR}/ubsan"
+            echo "LSAN_OPTIONS=suppressions=${GITHUB_WORKSPACE}/src/testdir/lsan-suppress.txt"
+          fi
+          if ${{ contains(matrix.extra, 'vimtags') }}; then
+            echo "TEST=-C runtime/doc vimtags VIMEXE=../../${SRCDIR}/vim"
+          fi
+          echo "CFLAGS=${CFLAGS}"
+          ) >> $GITHUB_ENV
+
+      - name: Set up system
+        run: |
+          if [[ ${CC} = clang ]]; then
+            # Use llvm-cov instead of gcov when compiler is clang.
+            ln -fs /usr/bin/llvm-cov ${HOME}/bin/gcov
+          fi
+          sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
+          sudo usermod -a -G audio "${USER}"
+          sudo bash ci/setup-xvfb.sh
+
+      - name: Set up snd-dummy
+        if: (!(contains(matrix.extra, 'unittests') || contains(matrix.extra, 'vimtags')))
+        env:
+          DEST_DIR: ${{ env.TMPDIR }}/linux-modules-extra-${{ env.LINUX_VERSION }}
+        uses: tecolicom/actions-use-apt-tools@main
+        with:
+          tools: linux-modules-extra-${{ env.LINUX_VERSION }}
+          path: "${DEST_DIR}"
+
+      - name: modprobe snd-dummy
+        if: (!(contains(matrix.extra, 'unittests') || contains(matrix.extra, 'vimtags')))
+        run: |
+          sudo depmod --verbose
+          sudo modprobe --verbose snd-dummy || true
+
+      - name: Check autoconf
+        if: contains(matrix.extra, 'unittests')
+        run: |
+          make -C src autoconf
+
+      - name: Set up shadow dir
+        if: matrix.shadow
+        run: |
+          make -C src shadow
+          echo "SRCDIR=${{ matrix.shadow }}" >> $GITHUB_ENV
+          echo "SHADOWOPT=-C ${{ matrix.shadow }}" >> $GITHUB_ENV
+
+# action/setup-ruby, then modify [Install hoxxx] and [Setup system]
+#--       - name: Install ruby-3.3.0-rc1{{{
+#--         if: false
+#--         uses: ruby/setup-ruby@v1
+#--         with:
+#--           ruby-version: ruby-3.3.0-rc1
+#-- 
+#--       - name: Set ruby-3.3 environment
+#--         if: false
+#--         id: rb33env
+#--         run: |
+#--           which ruby
+#--           ruby -v
+#--           rb33libdir=$(ruby -rrbconfig -e 'print RbConfig::CONFIG["libdir"]')
+#--           rb33pkgconfigdir=${rb33libdir}'/pkgconfig'
+#--           echo "rb33_ldlibrarypath=${rb33libdir}" >> $GITHUB_OUTPUT
+#--           echo "rb33_pkgconfigpath=${rb33pkgconfigdir}" >> $GITHUB_OUTPUT}}}
+
+      - name: Configure
+        run: |
+          ./configure --with-features=${{ matrix.features }} ${CONFOPT} --enable-fail-if-missing
+          # Append various warning flags to CFLAGS.
+          sed -i -f ci/config.mk.sed ${SRCDIR}/auto/config.mk
+          sed -i -f ci/config.mk.${CC}.sed ${SRCDIR}/auto/config.mk
+          if [[ ${CC} = clang ]]; then
+            # Suppress some warnings produced by clang 12 and later.
+            sed -i -f ci/config.mk.clang-12.sed ${SRCDIR}/auto/config.mk
+          fi
+
+      - name: Build
+        if: (!contains(matrix.extra, 'unittests'))
+        run: |
+          make ${SHADOWOPT} -j${NPROC}
+
+      - name: Check version
+        if: (!contains(matrix.extra, 'unittests'))
+        run: |
+          "${SRCDIR}"/vim --version
+          "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-1.vim -c quit
+          "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-2.vim -c quit
+
+      # - name: Test
+      # - name: Vim tags
+      # - name: Generate gcov files
+      # - name: Codecov
+      # - name: ASan logs
+
+# vim: set tw=2 autoindent fdm=marker :
+
