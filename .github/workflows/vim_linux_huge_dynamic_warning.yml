@@ -87,7 +87,7 @@ jobs:
         run: |
           repo=${{ inputs.repo }}
           ref=${{ inputs.ref }}
-          if [ $(echo $ref | wc -c) -eq 41 ] && $(echo $ref | sed 's:[a-f0-9A-F]::g') == '' ]
+          if [ $(echo $ref | wc -c) -eq 41 ] && [ $(echo $ref | sed 's:[a-f0-9A-F]::g') == '' ]
           then ref=${{ inputs.ref }}
           else ref=''
           fi
