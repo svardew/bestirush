@@ -100,7 +100,7 @@ jobs:
 
       - name: Check Filelist (for packaging)
         run: |
-          /bin/false # If any files in the repository are not listed in Filelist this will
+          # If any files in the repository are not listed in Filelist this will
           # exit with an error code and list the missing entries.
           make -f ci/unlisted.make
 
