@@ -1,11 +1,21 @@
 name: vim-linux-huge-ciwarnings
+description: |
+  ruby 30,31,32 vim ubuntu-latest both static n dynamic
+  vim/vim ci.yml is huge-dynamic-allwarning
+  check if configure success for all ruby 3.x
+  gh run $action -f repo=aaa/rrr -f rubyversion='3.3.0-rc1'
 
 on:
   workflow_dispatch:
     inputs:
       repo:
+        # owner/repo, use [svardew/vim]
         type: string
       ref:
+        # version, full sha1 needs
+        type: string
+      rubyversion:
+        # arg for ruby/setup-ruby, use [ruby-3.3.0-rc1]
         type: string
 
 # Cancels all previous workflow runs for pull requests that have not completed.
@@ -158,22 +168,22 @@ jobs:
           sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-${{ env.CLANG_VER }} 100
           sudo update-alternatives --install /usr/bin/asan_symbolize asan_symbolize /usr/bin/asan_symbolize-${{ env.CLANG_VER }} 100
 
-      - name: Install ruby 3.3.0
+      - name: Install my_ruby
         uses: ruby/setup-ruby@v1
         with:
-           ruby-version: ruby-3.3.0-rc1
-      - name: Setup ld.so.conf for ruby 3.3.0
+           ruby-version: ${{ inputs.rubyversion || ruby-3.3.0-rc1 }}
+      - name: Setup ld.so.conf for my_ruby
         run: |
           which ruby
           ruby -v
           ruby -rrbconfig -e 'puts d=RbConfig::CONFIG["libdir"]; puts Dir.glob(d+"/*")'
           cat /etc/ld.so.conf
           ls /etc/ld.so.conf.d
-          sudo touch /etc/ld.so.conf.d/vim_ruby33.conf
-          ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]' | sudo tee /etc/ld.so.conf.d/vim_ruby33.conf
+          sudo touch /etc/ld.so.conf.d/vim_myruby.conf
+          ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]' | sudo tee /etc/ld.so.conf.d/vim_myruby.conf
           sudo ldconfig
           ldconfig -p
-          # /bin/false
+          /bin/false
 
       - name: Set up environment
         run: |
@@ -300,6 +310,38 @@ jobs:
         if: (!contains(matrix.extra, 'unittests'))
         run: |
           make ${SHADOWOPT} -j${NPROC}
+
+      - name: Build_fail_log
+        if: false
+        run: |
+          # current status, configure or build fails. stop here for TODO list up and read log...
+          /bin/true
+          #== build fails. # Append various warning flags to CFLAGS.{{{
+          #== * ruby/internal/abi.h:43:1: error: no previous prototype for ‘ruby_abi_version’ [-Werror=missing-prototypes]
+          #== * ruby/internal/encoding/ctype.h:82:46: warning: unused parameter ‘enc’ [-Wunused-parameter]
+          #== ----------------------------------------
+          #== gcc -c -I. -I/opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0 -I/opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/x86_64-linux -DRUBY_VERSION=33 -Iproto -DHAVE_CONFIG_H -DFEAT_GUI_GTK  -pthread -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/x86_64-linux-gnu -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/pango-1.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/libpng16   --coverage -DUSE_GCOV_FLUSH  -D_REENTRANT -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -Wall -Wextra -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Werror -Wno-deprecated-declarations -Wno-error=maybe-uninitialized   -DEXITFREE     -Wno-error=unused-parameter -Wno-strict-prototypes -o objects/if_ruby.o if_ruby.c
+          #== In file included from /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby/ruby.h:26,
+          #==                  from /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby.h:38,
+          #==                  from if_ruby.c:110:
+          #== /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby/internal/abi.h:43:1: error: no previous prototype for ‘ruby_abi_version’ [-Werror=missing-prototypes]
+          #==    43 | ruby_abi_version(void)
+          #==       | ^~~~~~~~~~~~~~~~
+          #== In file included from /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby/encoding.h:22,
+          #==                  from if_ruby.c:111:
+          #== /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby/internal/encoding/ctype.h: In function ‘rb_enc_isascii’:
+          #== /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby/internal/encoding/ctype.h:82:46: warning: unused parameter ‘enc’ [-Wunused-parameter]
+          #==    82 | rb_enc_isascii(OnigCodePoint c, rb_encoding *enc)
+          #==       |                                 ~~~~~~~~~~~~~^~~
+          #== gcc -c -I. -Iproto -DHAVE_CONFIG_H -DFEAT_GUI_GTK  -pthread -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/x86_64-linux-gnu -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/pango-1.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/libpng16   --coverage -DUSE_GCOV_FLUSH  -D_REENTRANT -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -Wall -Wextra -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Werror -Wno-deprecated-declarations -Wno-error=maybe-uninitialized   -DEXITFREE     -o objects/netbeans.o netbeans.c
+          #== gcc -c -I. -Iproto -DHAVE_CONFIG_H -DFEAT_GUI_GTK  -pthread -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/x86_64-linux-gnu -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/pango-1.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/libpng16   --coverage -DUSE_GCOV_FLUSH  -D_REENTRANT -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -Wall -Wextra -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Werror -Wno-deprecated-declarations -Wno-error=maybe-uninitialized   -DEXITFREE     -o objects/job.o job.c
+          #== cc1: all warnings being treated as errors
+          #== make[1]: *** [Makefile:3297: objects/if_ruby.o] Error 1
+          #== make[1]: *** Waiting for unfinished jobs....
+          #== make[1]: Leaving directory '/home/runner/work/dew/dew/src'
+          #== make: *** [Makefile:29: first] Error 2
+          #== Error: Process completed with exit code 2.
+          #== ----------------------------------------}}}
 
       - name: Check version
         if: (!contains(matrix.extra, 'unittests'))
