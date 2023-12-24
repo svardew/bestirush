@@ -1,9 +1,9 @@
 name: vim-linux-huge-ciwarnings
-description: |
-  ruby 30,31,32 vim ubuntu-latest both static n dynamic
-  vim/vim ci.yml is huge-dynamic-allwarning
-  check if configure success for all ruby 3.x
-  gh run $action -f repo=aaa/rrr -f rubyversion='3.3.0-rc1'
+#= description: |
+#=   ruby 30,31,32 vim ubuntu-latest both static n dynamic
+#=   vim/vim ci.yml is huge-dynamic-allwarning
+#=   check if configure success for all ruby 3.x
+#=   gh run $action -f repo=aaa/rrr -f rubyversion='3.3.0-rc1'
 
 on:
   workflow_dispatch:
