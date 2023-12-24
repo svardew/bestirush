@@ -171,7 +171,7 @@ jobs:
       - name: Install my_ruby
         uses: ruby/setup-ruby@v1
         with:
-           ruby-version: ${{ inputs.rubyversion || ruby-3.3.0-rc1 }}
+           ruby-version: ${{ inputs.rubyversion || 'ruby-3.3.0-rc1' }}
       - name: Setup ld.so.conf for my_ruby
         run: |
           which ruby
