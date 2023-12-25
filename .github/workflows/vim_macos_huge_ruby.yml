@@ -80,8 +80,22 @@ jobs:
           esac
           ) >> $GITHUB_ENV
 
-      - name: Install my_ruby
+      - name: Check current ruby
         run: |
+          # default system ruby is
+          # /usr/local/opt/ruby@3.0/bin/ruby
+          # ruby 3.0.6p216 (2023-03-30 revision 23a532679b) [x86_64-darwin21]
+          which ruby
+          ruby -v
+      - name: Install my_ruby
+        uses: ruby/setup-ruby@v1
+        with:
+           ruby-version: ${{ inputs.rubyversion || 'ruby-3.3.0-rc1' }}
+      - name: Check my_ruby
+        run: |
+          # default system ruby is
+          # /usr/local/opt/ruby@3.0/bin/ruby
+          # ruby 3.0.6p216 (2023-03-30 revision 23a532679b) [x86_64-darwin21]
           which ruby
           ruby -v
           echo 'force fail. bye'
