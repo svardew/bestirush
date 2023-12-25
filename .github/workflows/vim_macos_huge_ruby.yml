@@ -1,0 +1,463 @@
+
+name: vim-macos-huge-ciwarnings
+#= description: |
+#=   ruby 30,31,32 vim macos-latest. default static. dynamic way unknwn...
+#=   vim/vim ci.yml is huge-dynamic-allwarning
+#=   check if configure success for all ruby 3.x
+#=   gh run $action -f repo=aaa/rrr -f rubyversion='3.3.0-rc1'
+#=   check macos builtin ruby version...
+#=   check for 3.1.4[ok], 3.2.2, 3.3.0-rc1
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        # owner/repo, use [svardew/vim]
+        type: string
+      ref:
+        # version, full sha1 needs
+        type: string
+      rubyversion:
+        # arg for ruby/setup-ruby, use [ruby-3.3.0-rc1]
+        type: string
+
+# Cancels all previous workflow runs for pull requests that have not completed.
+concurrency:
+  # The concurrency group contains the workflow name and the branch name for
+  # pull requests or the commit hash for any other events.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  macos:
+    runs-on: macos-latest
+
+    env:
+      CC: clang
+      TEST: test
+      SRCDIR: ./src
+      LEAK_CFLAGS: -DEXITFREE
+      TERM: xterm
+
+    strategy:
+      fail-fast: false
+      matrix:
+        features: [tiny, normal, huge]
+
+    steps:
+      # - name: Checkout repository from github
+        # uses: actions/checkout@v4
+      - name: Checkout repository from github
+        uses: actions/checkout@v4
+        with:
+          repository: svardew/vim
+          ref: ''
+
+      - name: Install packages
+        if: matrix.features == 'huge'
+        run: |
+          brew install lua
+          echo "LUA_PREFIX=/usr/local" >> $GITHUB_ENV
+
+      - name: Set up environment
+        run: |
+          (
+          echo "NPROC=$(getconf _NPROCESSORS_ONLN)"
+          case "${{ matrix.features }}" in
+          tiny)
+            echo "TEST=testtiny"
+            echo "CONFOPT=--disable-gui"
+            ;;
+          normal)
+            ;;
+          huge)
+            echo "CONFOPT=--enable-perlinterp --enable-python3interp --enable-rubyinterp --enable-luainterp --enable-tclinterp"
+            ;;
+          esac
+          ) >> $GITHUB_ENV
+
+      - name: Install my_ruby
+        run: |
+          which ruby
+          ruby -v
+          echo 'force fail. bye'
+          exit 1
+
+      - name: Configure
+        run: |
+          ./configure --with-features=${{ matrix.features }} ${CONFOPT} --enable-fail-if-missing
+          # Append various warning flags to CFLAGS.
+          # BSD sed needs backup extension specified.
+          sed -i.bak -f ci/config.mk.sed ${SRCDIR}/auto/config.mk
+          # On macOS, the entity of gcc is clang.
+          sed -i.bak -f ci/config.mk.clang.sed ${SRCDIR}/auto/config.mk
+          # Suppress some warnings produced by clang 12 and later.
+          if clang --version | grep -qs 'Apple clang version \(1[3-9]\|[2-9]\)\.'; then
+            sed -i.bak -f ci/config.mk.clang-12.sed ${SRCDIR}/auto/config.mk
+          fi
+
+      - name: Build
+        env:
+          LC_ALL: C
+        run: |
+          make -j${NPROC}
+
+      - name: Check version
+        run: |
+          "${SRCDIR}"/vim --version
+          "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-1.vim -c quit
+          "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-2.vim -c quit
+
+      - name: Test
+        timeout-minutes: 20
+        run: |
+          make ${TEST}
+
+
+#>>>   linux:
+#>>>     runs-on: ubuntu-22.04
+#>>> 
+#>>>     env:
+#>>>       CC: ${{ matrix.compiler }}
+#>>>       GCC_VER: 13
+#>>>       CLANG_VER: 17
+#>>>       TEST: test
+#>>>       SRCDIR: ./src
+#>>>       LEAK_CFLAGS: -DEXITFREE
+#>>>       LOG_DIR: ${{ github.workspace }}/logs
+#>>>       TERM: xterm
+#>>>       DISPLAY: ':99'
+#>>>       DEBIAN_FRONTEND: noninteractive
+#>>> 
+#>>>     strategy:
+#>>>       fail-fast: false
+#>>>       matrix:
+#>>>         ### features: [tiny, normal, huge]
+#>>>         features: [huge]
+#>>>         compiler: [clang, gcc]
+#>>>         extra: [[]]
+#>>>         # Only use non-native architecture when features != huge.
+#>>>         # features=huge tries to install python3-dev, which fails to install
+#>>>         # for the non-native architecture.
+#>>>         architecture: [native]
+#>>>         include:
+#>>>           # - features: tiny
+#>>>           #   compiler: clang
+#>>>           #   extra: [nogui]
+#>>>           # - features: tiny
+#>>>           #   compiler: gcc
+#>>>           #   extra: [nogui]
+#>>>           # - features: normal
+#>>>           #   shadow: ./src/shadow
+#>>>           #   compiler: gcc
+#>>>           #   architecture: i386
+#>>>           - features: huge
+#>>>             coverage: true
+#>>>           - features: huge
+#>>>             compiler: clang
+#>>>             interface: dynamic
+#>>>             python3: stable-abi
+#>>>           - features: huge
+#>>>             compiler: gcc
+#>>>             coverage: true
+#>>>             interface: dynamic
+#>>>             extra: [uchar, testgui]
+#>>>           - features: huge
+#>>>             compiler: clang
+#>>>             # Lua5.1 is the most widely used version (since it's what LuaJIT is
+#>>>             # compatible with), so ensure it works
+#>>>             lua_ver: '5.1'
+#>>>             extra: [asan]
+#>>>           - features: huge
+#>>>             compiler: gcc
+#>>>             coverage: true
+#>>>             extra: [unittests]
+#>>>           # - features: normal
+#>>>           #   compiler: gcc
+#>>>           #   extra: [vimtags]
+#>>> 
+#>>>     steps:
+#>>>       - name: repo, ref from workflow_dispatch
+#>>>         id: repository
+#>>>         shell: bash {0}
+#>>>         run: |
+#>>>           repo=${{ inputs.repo }}
+#>>>           ref=${{ inputs.ref }}
+#>>>           echo "ref=${ref}" >> $GITHUB_OUTPUT
+#>>>           echo "repo=${repo}" >> $GITHUB_OUTPUT
+#>>>           echo "/* " $ref " -- " $repo " */"
+#>>> 
+#>>>       - name: Checkout repository from github
+#>>>         uses: actions/checkout@v4
+#>>>         with:
+#>>>           repository: ${{ steps.repository.outputs.repo }}
+#>>>           ref: ${{ steps.repository.outputs.ref }}
+#>>> 
+#>>>       - name: Check Filelist (for packaging)
+#>>>         run: |
+#>>>           # If any files in the repository are not listed in Filelist this will
+#>>>           # exit with an error code and list the missing entries.
+#>>>           make -f ci/unlisted.make
+#>>> 
+#>>>       - run: sudo dpkg --add-architecture i386
+#>>>         if: matrix.architecture == 'i386'
+#>>> 
+#>>>       - name: Install packages
+#>>>         run: |
+#>>>           PKGS=( \
+#>>>             gettext \
+#>>>             libgtk2.0-dev:${{ matrix.architecture }} \
+#>>>             desktop-file-utils \
+#>>>             libtool-bin \
+#>>>             libncurses-dev:${{ matrix.architecture }} \
+#>>>             libxt-dev:${{ matrix.architecture }} \
+#>>>           )
+#>>>           if ${{ matrix.features == 'huge' }}; then
+#>>>             LUA_VER=${{ matrix.lua_ver || '5.4' }}
+#>>>             PKGS+=( \
+#>>>               autoconf \
+#>>>               gdb \
+#>>>               lcov \
+#>>>               libcanberra-dev \
+#>>>               libperl-dev \
+#>>>               python2-dev \
+#>>>               python3-dev \
+#>>>               liblua${LUA_VER}-dev \
+#>>>               lua${LUA_VER} \
+#>>>               ruby-dev \
+#>>>               tcl-dev \
+#>>>               cscope \
+#>>>               libsodium-dev \
+#>>>               attr \
+#>>>               libattr1-dev
+#>>>             )
+#>>>           fi
+#>>>           sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
+#>>> 
+#>>>       - name: Install gcc-${{ env.GCC_VER }}
+#>>>         if:  matrix.compiler == 'gcc'
+#>>>         run: |
+#>>>           sudo apt-get install -y gcc-${{ env.GCC_VER }}:${{ matrix.architecture }}
+#>>>           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ env.GCC_VER }} 100
+#>>>           sudo update-alternatives --set gcc /usr/bin/gcc-${{ env.GCC_VER }}
+#>>> 
+#>>>       - name: Install clang-${{ env.CLANG_VER }}
+#>>>         if: matrix.compiler == 'clang'
+#>>>         run: |
+#>>>           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+#>>>           . /etc/lsb-release
+#>>>           sudo add-apt-repository -y "deb http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-${{ env.CLANG_VER }} main"
+#>>>           sudo apt-get install -y clang-${{ env.CLANG_VER }} llvm-${{ env.CLANG_VER }}
+#>>>           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${{ env.CLANG_VER }} 100
+#>>>           sudo update-alternatives --set clang /usr/bin/clang-${{ env.CLANG_VER }}
+#>>>           sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-${{ env.CLANG_VER }} 100
+#>>>           sudo update-alternatives --install /usr/bin/asan_symbolize asan_symbolize /usr/bin/asan_symbolize-${{ env.CLANG_VER }} 100
+#>>> 
+#>>>       - name: Install my_ruby
+#>>>         uses: ruby/setup-ruby@v1
+#>>>         with:
+#>>>            ruby-version: ${{ inputs.rubyversion || 'ruby-3.3.0-rc1' }}
+#>>>       - name: Setup ld.so.conf for my_ruby
+#>>>         run: |
+#>>>           which ruby
+#>>>           ruby -v
+#>>>           ruby -rrbconfig -e 'puts d=RbConfig::CONFIG["libdir"]; puts Dir.glob(d+"/*")'
+#>>>           cat /etc/ld.so.conf
+#>>>           ls /etc/ld.so.conf.d
+#>>>           sudo touch /etc/ld.so.conf.d/vim_myruby.conf
+#>>>           ruby -rrbconfig -e 'puts RbConfig::CONFIG["libdir"]' | sudo tee /etc/ld.so.conf.d/vim_myruby.conf
+#>>>           sudo ldconfig
+#>>>           ldconfig -p
+#>>>           # /bin/false
+#>>> 
+#>>>       - name: Set up environment
+#>>>         run: |
+#>>>           mkdir -p "${LOG_DIR}"
+#>>>           mkdir -p "${HOME}/bin"
+#>>>           echo "${HOME}/bin" >> $GITHUB_PATH
+#>>>           (
+#>>>           echo "LINUX_VERSION=$(uname -r)"
+#>>>           echo "NPROC=$(getconf _NPROCESSORS_ONLN)"
+#>>>           echo "TMPDIR=${{ runner.temp }}"
+#>>> 
+#>>>           case "${{ matrix.features }}" in
+#>>>           tiny)
+#>>>             echo "TEST=testtiny"
+#>>>             if ${{ contains(matrix.extra, 'nogui') }}; then
+#>>>               echo "CONFOPT=--disable-gui"
+#>>>             fi
+#>>>             ;;
+#>>>           normal)
+#>>>             ;;
+#>>>           huge)
+#>>>             echo "TEST=scripttests test_libvterm"
+#>>>             INTERFACE=${{ matrix.interface || 'yes' }}
+#>>>             if ${{ matrix.python3 == 'stable-abi' }}; then
+#>>>               PYTHON3_CONFOPT="--with-python3-stable-abi=3.8"
+#>>>             fi
+#>>>             echo "CONFOPT=--enable-perlinterp=${INTERFACE} --enable-pythoninterp=${INTERFACE} --enable-python3interp=${INTERFACE} --enable-rubyinterp=${INTERFACE} --enable-luainterp=${INTERFACE} --enable-tclinterp=${INTERFACE} ${PYTHON3_CONFOPT}"
+#>>>             ;;
+#>>>           esac
+#>>> 
+#>>>           if ${{ matrix.coverage == true }}; then
+#>>>             CFLAGS="${CFLAGS} --coverage -DUSE_GCOV_FLUSH"
+#>>>             echo "LDFLAGS=--coverage"
+#>>>           fi
+#>>>           if ${{ contains(matrix.extra, 'uchar') }}; then
+#>>>             CFLAGS="${CFLAGS} -funsigned-char"
+#>>>           fi
+#>>>           if ${{ contains(matrix.extra, 'testgui') }}; then
+#>>>             echo "TEST=-C src testgui"
+#>>>           fi
+#>>>           if ${{ contains(matrix.extra, 'unittests') }}; then
+#>>>             echo "TEST=unittests"
+#>>>           fi
+#>>>           if ${{ contains(matrix.extra, 'asan') }}; then
+#>>>             echo "SANITIZER_CFLAGS=-g -O1 -DABORT_ON_INTERNAL_ERROR -DEXITFREE -fsanitize-recover=all -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer"
+#>>>             echo "ASAN_OPTIONS=print_stacktrace=1 log_path=${LOG_DIR}/asan"
+#>>>             echo "UBSAN_OPTIONS=print_stacktrace=1 log_path=${LOG_DIR}/ubsan"
+#>>>             echo "LSAN_OPTIONS=suppressions=${GITHUB_WORKSPACE}/src/testdir/lsan-suppress.txt"
+#>>>           fi
+#>>>           if ${{ contains(matrix.extra, 'vimtags') }}; then
+#>>>             echo "TEST=-C runtime/doc vimtags VIMEXE=../../${SRCDIR}/vim"
+#>>>           fi
+#>>>           echo "CFLAGS=${CFLAGS}"
+#>>>           ) >> $GITHUB_ENV
+#>>> 
+#>>>       - name: Set up system
+#>>>         run: |
+#>>>           if [[ ${CC} = clang ]]; then
+#>>>             # Use llvm-cov instead of gcov when compiler is clang.
+#>>>             ln -fs /usr/bin/llvm-cov ${HOME}/bin/gcov
+#>>>           fi
+#>>>           sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
+#>>>           sudo usermod -a -G audio "${USER}"
+#>>>           sudo bash ci/setup-xvfb.sh
+#>>> 
+#>>>       - name: Set up snd-dummy
+#>>>         if: (!(contains(matrix.extra, 'unittests') || contains(matrix.extra, 'vimtags')))
+#>>>         env:
+#>>>           DEST_DIR: ${{ env.TMPDIR }}/linux-modules-extra-${{ env.LINUX_VERSION }}
+#>>>         uses: tecolicom/actions-use-apt-tools@main
+#>>>         with:
+#>>>           tools: linux-modules-extra-${{ env.LINUX_VERSION }}
+#>>>           path: "${DEST_DIR}"
+#>>> 
+#>>>       - name: modprobe snd-dummy
+#>>>         if: (!(contains(matrix.extra, 'unittests') || contains(matrix.extra, 'vimtags')))
+#>>>         run: |
+#>>>           sudo depmod --verbose
+#>>>           sudo modprobe --verbose snd-dummy || true
+#>>> 
+#>>>       - name: Check autoconf
+#>>>         if: contains(matrix.extra, 'unittests')
+#>>>         run: |
+#>>>           make -C src autoconf
+#>>> 
+#>>>       - name: Set up shadow dir
+#>>>         if: matrix.shadow
+#>>>         run: |
+#>>>           make -C src shadow
+#>>>           echo "SRCDIR=${{ matrix.shadow }}" >> $GITHUB_ENV
+#>>>           echo "SHADOWOPT=-C ${{ matrix.shadow }}" >> $GITHUB_ENV
+#>>> 
+#>>> # action/setup-ruby, then modify [Install hoxxx] and [Setup system]
+#>>> #--       - name: Install ruby-3.3.0-rc1{{{
+#>>> #--         if: false
+#>>> #--         uses: ruby/setup-ruby@v1
+#>>> #--         with:
+#>>> #--           ruby-version: ruby-3.3.0-rc1
+#>>> #-- 
+#>>> #--       - name: Set ruby-3.3 environment
+#>>> #--         if: false
+#>>> #--         id: rb33env
+#>>> #--         run: |
+#>>> #--           which ruby
+#>>> #--           ruby -v
+#>>> #--           rb33libdir=$(ruby -rrbconfig -e 'print RbConfig::CONFIG["libdir"]')
+#>>> #--           rb33pkgconfigdir=${rb33libdir}'/pkgconfig'
+#>>> #--           echo "rb33_ldlibrarypath=${rb33libdir}" >> $GITHUB_OUTPUT
+#>>> #--           echo "rb33_pkgconfigpath=${rb33pkgconfigdir}" >> $GITHUB_OUTPUT}}}
+#>>> # current huge configure, ruby/dyn is 2of5, in [huge,clang,native] and [huge,gcc,uchar,testgui,true,dynamic]
+#>>> 
+#>>>       - name: Configure
+#>>>         run: |
+#>>>           ./configure --with-features=${{ matrix.features }} ${CONFOPT} --enable-fail-if-missing
+#>>>           # Append various warning flags to CFLAGS.
+#>>>           sed -i -f ci/config.mk.sed ${SRCDIR}/auto/config.mk
+#>>>           sed -i -f ci/config.mk.${CC}.sed ${SRCDIR}/auto/config.mk
+#>>>           if [[ ${CC} = clang ]]; then
+#>>>             # Suppress some warnings produced by clang 12 and later.
+#>>>             sed -i -f ci/config.mk.clang-12.sed ${SRCDIR}/auto/config.mk
+#>>>           fi
+#>>> 
+#>>>       - name: Build
+#>>>         if: (!contains(matrix.extra, 'unittests'))
+#>>>         run: |
+#>>>           make ${SHADOWOPT} -j${NPROC}
+#>>> 
+#>>>       - name: Build_fail_log
+#>>>         if: false
+#>>>         run: |
+#>>>           # current status, configure or build fails. stop here for TODO list up and read log...
+#>>>           /bin/true
+#>>>           #== build fails. # Append various warning flags to CFLAGS.{{{
+#>>>           #== * ruby/internal/abi.h:43:1: error: no previous prototype for ‘ruby_abi_version’ [-Werror=missing-prototypes]
+#>>>           #== * ruby/internal/encoding/ctype.h:82:46: warning: unused parameter ‘enc’ [-Wunused-parameter]
+#>>>           #== ----------------------------------------
+#>>>           #== gcc -c -I. -I/opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0 -I/opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/x86_64-linux -DRUBY_VERSION=33 -Iproto -DHAVE_CONFIG_H -DFEAT_GUI_GTK  -pthread -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/x86_64-linux-gnu -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/pango-1.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/libpng16   --coverage -DUSE_GCOV_FLUSH  -D_REENTRANT -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -Wall -Wextra -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Werror -Wno-deprecated-declarations -Wno-error=maybe-uninitialized   -DEXITFREE     -Wno-error=unused-parameter -Wno-strict-prototypes -o objects/if_ruby.o if_ruby.c
+#>>>           #== In file included from /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby/ruby.h:26,
+#>>>           #==                  from /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby.h:38,
+#>>>           #==                  from if_ruby.c:110:
+#>>>           #== /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby/internal/abi.h:43:1: error: no previous prototype for ‘ruby_abi_version’ [-Werror=missing-prototypes]
+#>>>           #==    43 | ruby_abi_version(void)
+#>>>           #==       | ^~~~~~~~~~~~~~~~
+#>>>           #== In file included from /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby/encoding.h:22,
+#>>>           #==                  from if_ruby.c:111:
+#>>>           #== /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby/internal/encoding/ctype.h: In function ‘rb_enc_isascii’:
+#>>>           #== /opt/hostedtoolcache/Ruby/3.3.0-rc1/x64/include/ruby-3.3.0+0/ruby/internal/encoding/ctype.h:82:46: warning: unused parameter ‘enc’ [-Wunused-parameter]
+#>>>           #==    82 | rb_enc_isascii(OnigCodePoint c, rb_encoding *enc)
+#>>>           #==       |                                 ~~~~~~~~~~~~~^~~
+#>>>           #== gcc -c -I. -Iproto -DHAVE_CONFIG_H -DFEAT_GUI_GTK  -pthread -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/x86_64-linux-gnu -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/pango-1.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/libpng16   --coverage -DUSE_GCOV_FLUSH  -D_REENTRANT -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -Wall -Wextra -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Werror -Wno-deprecated-declarations -Wno-error=maybe-uninitialized   -DEXITFREE     -o objects/netbeans.o netbeans.c
+#>>>           #== gcc -c -I. -Iproto -DHAVE_CONFIG_H -DFEAT_GUI_GTK  -pthread -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/x86_64-linux-gnu -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/pango-1.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/libpng16   --coverage -DUSE_GCOV_FLUSH  -D_REENTRANT -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -Wall -Wextra -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Werror -Wno-deprecated-declarations -Wno-error=maybe-uninitialized   -DEXITFREE     -o objects/job.o job.c
+#>>>           #== cc1: all warnings being treated as errors
+#>>>           #== make[1]: *** [Makefile:3297: objects/if_ruby.o] Error 1
+#>>>           #== make[1]: *** Waiting for unfinished jobs....
+#>>>           #== make[1]: Leaving directory '/home/runner/work/dew/dew/src'
+#>>>           #== make: *** [Makefile:29: first] Error 2
+#>>>           #== Error: Process completed with exit code 2.
+#>>>           #== ----------------------------------------}}}
+#>>> 
+#>>>       # +ruby/dyn [huge,clang,native] [huge,gcc,uchar,testgui,true,dynamic]
+#>>>       # +ruby [huge,gcc,native] [huge,clang, asan, 5.1]
+#>>>       - name: Check version
+#>>>         if: (!contains(matrix.extra, 'unittests'))
+#>>>         run: |
+#>>>           "${SRCDIR}"/vim --version
+#>>>           "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-1.vim -c quit
+#>>>           "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-2.vim -c quit
+#>>> 
+#>>>       - name: Test test_ruby
+#>>>         shell: bash {0}
+#>>>         run: |
+#>>>           cd "${SRCDIR}"/testdir
+#>>>           make test_ruby.res
+#>>>           echo "/* test_ruby.res?"
+#>>>           echo " */"
+#>>>           find . -name test_ruby.res | wc -l
+#>>>           echo "/* messages"
+#>>>           echo " */"
+#>>>           if [ -f messages ]; then cat messages ;fi
+#>>> 
+#>>>       # - name: Test
+#>>>       # - name: Vim tags
+#>>>       # - name: Generate gcov files
+#>>>       # - name: Codecov
+#>>>       # - name: ASan logs
+
+# vim: set tw=2 autoindent fdm=marker :
+
