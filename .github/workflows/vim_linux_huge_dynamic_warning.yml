@@ -4,6 +4,9 @@ name: vim-linux-huge-ciwarnings
 #=   vim/vim ci.yml is huge-dynamic-allwarning
 #=   check if configure success for all ruby 3.x
 #=   gh run $action -f repo=aaa/rrr -f rubyversion='3.3.0-rc1'
+#=   check not for 3.0.6, ubuntu-pre-install 3.0.x eixist
+#=   check for 3.1.4, 3.2.2, 3.3.0-rc1
+
 
 on:
   workflow_dispatch:
@@ -343,13 +346,14 @@ jobs:
           #== Error: Process completed with exit code 2.
           #== ----------------------------------------}}}
 
+      # +ruby/dyn [huge,clang,native] [huge,gcc,uchar,testgui,true,dynamic]
+      # +ruby [huge,gcc,native] [huge,clang, asan, 5.1]
       - name: Check version
         if: (!contains(matrix.extra, 'unittests'))
         run: |
           "${SRCDIR}"/vim --version
           "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-1.vim -c quit
           "${SRCDIR}"/vim -u NONE -i NONE --not-a-term -esNX -V1 -S ci/if_ver-2.vim -c quit
-          echo 'L352-exit:CheckVersion...' && /bin/false
 
       - name: Test test_ruby
         shell: bash {0}
