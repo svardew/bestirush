@@ -257,7 +257,7 @@ jobs:
         if: true
         run: |
           echo "temporary interrupb. check build log. find warning."
-          /bin/fasle
+          /bin/false
 
       - name: Test
         timeout-minutes: 25
