@@ -153,26 +153,26 @@ jobs:
       - name: configure, build
         id: build
         run: |
-          str = 'if_ruby'
+          str='if_ruby'
           cd ./vim
           patch src/testdir/test_ruby.vim --input ../${{ env.PATCHDIR }}/patch-test_ruby
-          if ${{ matrix.patch == 'patch-0083' }}; then
+          if ${{ matrix.patcha == 'patch-0083' }}; then
             patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/${{ matrix.patcha }}
             str=${str}'+'${{ matrix.patcha }}
           fi
-          if ${{ matrix.patch == 'patch-0456' }}; then
+          if ${{ matrix.patchb == 'patch-0456' }}; then
             patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/${{ matrix.patchb }}
             str=${str}'+'${{ matrix.patchb }}
           fi
-          if ${{ matrix.patch == 'patch-0491' }}; then
+          if ${{ matrix.patchc == 'patch-0491' }}; then
             patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/${{ matrix.patchc }}
             str=${str}'+'${{ matrix.patchc }}
           fi
-          if ${{ matrix.patch == 'patch-0561' }}; then
+          if ${{ matrix.patchd == 'patch-0561' }}; then
             patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/${{ matrix.patchd }}
             str=${str}'+'${{ matrix.patchd }}
           fi
-          if ${{ matrix.patch == 'patch-0718' }}; then
+          if ${{ matrix.patche == 'patch-0718' }}; then
             patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/${{ matrix.patche }}
             str=${str}'+'${{ matrix.patche }}
           fi
