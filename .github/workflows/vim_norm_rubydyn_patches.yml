@@ -192,7 +192,7 @@ jobs:
           echo '/* cat messages'
           echo ' */'
           cat messages
-          fla=$(./src/vim --version |grep -E '^Compi'|head -n1 |sed 's:Compiled\ by\ *::')
+          fla=$(../vim --version |grep -E '^Compi'|head -n1 |sed 's:Compiled\ by\ *::')
           echo $fla > message-x
           cat messages | sed '/^\s*$/ d; /^From/ s:^:--> :' >> messages-x
           mv messages-x ../../../${{ env.LOGDIR }}/messages-${{ matrix.interp }}-${fla}
