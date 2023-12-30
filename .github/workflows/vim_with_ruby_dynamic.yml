@@ -9,8 +9,8 @@ jobs:
   vim_patch:
     runs-on: ubuntu-22.04
     env:
-      # ref: v9.0.2138
-      REF: fda700cb04612fe2f9301a9ba820309175decabf
+      # patch 9.0.2189
+      REF: 7e4f62a2575e8ce9ebb842d4246288138b11dff3
       CONFIG: "--disable-gui --disable-libsodium --with-features=normal --enable-rubyinterp=dynamic"
       LOGDIR: logdir
       PATCHDIR: patch_and_test
@@ -18,18 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        patcha: ['patch-0083']
-        patchb: ['patch-0456']
-        patchc: ['patch-0491']
-        patchd: ['patch-0561']
-        patche: ['patch-0718']
-       #patcha: ['', 'patch-0083']
-       #patchb: ['', 'patch-0456']
-       #patchc: ['', 'patch-0491']
-       #patchd: ['', 'patch-0561']
-       #patche: ['', 'patch-0718']
         interp: [dynamic]
-        dllenv: [ldso,envvar]
+        dllenv: [ldso, envvar]
 
     steps:
       - name: Show message.
@@ -51,80 +41,30 @@ jobs:
         id: patches
         shell: bash {0}
         run: |
-          echo '/* File: patch-NNNN'
+          echo '/* File: patch-if_ruby'
           echo ' * ruby-3.3 remove transient_heap.'
-          echo ' * 5 patches to disable each detansient block in if_ruby.c'
+          echo ' * this patch disable rb_ary_detransient block in if_ruby.c'
           echo ' */'
-          # patch-0083,0456,... {{{
-          touch patch-0083
-          cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > patch-0083
-          : --- aa/if_ruby.c	2023-12-30 07:36:56.769577142 +0900
-          : +++ bb/if_ruby.c	2023-12-30 07:37:10.293757574 +0900
-          : @@ -83,7 +83,7 @@
-          :  #  define rb_gc_writebarrier_unprotect	rb_gc_writebarrier_unprotect_stub
-          :  # endif
-          :  
+          # patch-if_ruby {{{
+          touch patch-if_ruby
+          cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > patch-if_ruby
+          : --- aa/if_ruby.c
+          : +++ bb/if_ruby.c
+          : @@ -86 +86 @@
           : -# if RUBY_VERSION >= 26
-          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 33
-          :  #  define rb_ary_detransient	rb_ary_detransient_stub
-          :  # endif
-          :  
-          HERE_DOCU_MENT
-          touch patch-0456
-          cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > patch-0456
-          : --- aa/if_ruby.c	2023-12-30 07:36:56.769577142 +0900
-          : +++ bb/if_ruby.c	2023-12-30 07:37:10.293757574 +0900
-          : @@ -456,7 +456,7 @@
-          :  static VALUE (*dll_rb_ary_new) (void);
-          :  static VALUE (*dll_rb_ary_new4) (long n, const VALUE *elts);
-          :  static VALUE (*dll_rb_ary_push) (VALUE, VALUE);
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
+          : @@ -459 +459 @@
           : -# if RUBY_VERSION >= 26
-          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 33
-          :  static void (*dll_rb_ary_detransient) (VALUE);
-          :  # endif
-          :  # ifdef __ia64
-          HERE_DOCU_MENT
-          touch patch-0491
-          cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > patch-0491
-          : --- aa/if_ruby.c	2023-12-30 07:36:56.769577142 +0900
-          : +++ bb/if_ruby.c	2023-12-30 07:37:10.293757574 +0900
-          : @@ -491,7 +491,7 @@
-          :  #  endif
-          :  # endif
-          :  
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
+          : @@ -494 +494 @@
           : -# if RUBY_VERSION >= 26
-          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 33
-          :  void rb_ary_detransient_stub(VALUE x);
-          :  # endif
-          :  
-          HERE_DOCU_MENT
-          touch patch-0561
-          cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > patch-0561
-          : --- aa/if_ruby.c	2023-12-30 07:36:56.769577142 +0900
-          : +++ bb/if_ruby.c	2023-12-30 07:37:10.293757574 +0900
-          : @@ -561,7 +561,7 @@
-          :  }
-          :  #   endif
-          :  #  endif
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
+          : @@ -564 +564 @@
           : -#  if RUBY_VERSION >= 26
-          : +#  if RUBY_VERSION >= 26 && RUBY_VERSION <= 33
-          :      void
-          :  rb_ary_detransient_stub(VALUE x)
-          :  {
-          HERE_DOCU_MENT
-          touch patch-0718
-          cat <<'HERE_DOCU_MENT' | sed 's/^:\ //' > patch-0718
-          : --- aa/if_ruby.c	2023-12-30 07:36:56.769577142 +0900
-          : +++ bb/if_ruby.c	2023-12-30 07:37:10.293757574 +0900
-          : @@ -718,7 +718,7 @@
-          :      {"rb_ary_new4", (RUBY_PROC*)&dll_rb_ary_new4},
-          :  # endif
-          :      {"rb_ary_push", (RUBY_PROC*)&dll_rb_ary_push},
+          : +#  if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
+          : @@ -721 +721 @@
           : -# if RUBY_VERSION >= 26
-          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 33
-          :      {"rb_ary_detransient", (RUBY_PROC*)&dll_rb_ary_detransient},
-          :  # endif
-          :      {"rb_int2big", (RUBY_PROC*)&dll_rb_int2big},
+          : +# if RUBY_VERSION >= 26 && RUBY_VERSION <= 32
           HERE_DOCU_MENT
           # }}}
           echo '/* File: patch-test_ruby'
@@ -159,49 +99,37 @@ jobs:
             sudo ldconfig
             ldconfig -p | grep ruby
             echo "/* expect, config-build-test steps refer /etc/ld.so.cache"
-            echo " * for libruby.so.3.3 automatically..."
+            echo " * for libruby.so.3.3 ..."
             echo " */"
           fi
           if ${{ matrix.dllenv == 'envvar' }}; then
-            echo "rb33ldlibrarypath=${rubylibdir}"  >>$GITHUB_OUTPUT
+            echo "rb33ldlibrarypath=${rubylibdir}"  >> $GITHUB_OUTPUT
             echo "rb33pkgconfigpath=${rubylibdir}/pkgconfig" >> $GHITHUB_OUTPUT
             echo "/* expect, each steps export LD_LIBRARY_PATH first, then make,test, etc..."
-            echo " * values from steps.rb33env.outputs.NAME"
+            echo " * set values from steps.rb33env.outputs.NAME"
             echo " */"
           fi
 
-      - name: configure, build
-        id: build
-        shell: bash {0}
+      - name: patch, configure
         run: |
           if ${{ matrix.dllenv == 'envvar' }}; then
             export LD_LIBRARY_PATH=${{ steps.rb33env.outputs.rb33ldlibrarypath }}
             export PKG_CONFIG_PATH=${{ steps.rb33env.outputs.rb33pkgconfigpath }}
           fi
-          str='if_ruby'
+          str='if_ruby_withdll-'${{ matrix.dllenv }}
           cd ./vim
           patch src/testdir/test_ruby.vim --input ../${{ env.PATCHDIR }}/patch-test_ruby
-          if ${{ matrix.patcha == 'patch-0083' }}; then
-            patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/${{ matrix.patcha }}
-            str=${str}'+'${{ matrix.patcha }}
-          fi
-          if ${{ matrix.patchb == 'patch-0456' }}; then
-            patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/${{ matrix.patchb }}
-            str=${str}'+'${{ matrix.patchb }}
-          fi
-          if ${{ matrix.patchc == 'patch-0491' }}; then
-            patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/${{ matrix.patchc }}
-            str=${str}'+'${{ matrix.patchc }}
-          fi
-          if ${{ matrix.patchd == 'patch-0561' }}; then
-            patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/${{ matrix.patchd }}
-            str=${str}'+'${{ matrix.patchd }}
-          fi
-          if ${{ matrix.patche == 'patch-0718' }}; then
-            patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/${{ matrix.patche }}
-            str=${str}'+'${{ matrix.patche }}
-          fi
+          patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/patch-if_ruby
           ./configure ${{ env.CONFIG }} --enable-rubyinterp=${{ matrix.interp }} --with-compiledby=${str}
+
+      - name: modify configure warnings
+        if: false
+        run: |
+          /bin/true
+
+      - name: build
+        run: |
+          cd vim
           make
           ./src/vim --version
 
@@ -215,10 +143,10 @@ jobs:
           fi
           cd ./vim/src/testdir
           make test_ruby.res
-          echo '/* test_*.res count. if 0, no test success'
+          echo '/* test_*.res count. if 0, no test success or skipped'
           echo ' */'
           find . -maxdepth 1 -type f -name 'test_*.res' | wc -l
-          echo '/* cat messages'
+          echo '/* cat messages. FAILDE or SKIPPED should not appear'
           echo ' */'
           cat messages
           fla=$(../vim --version |grep -E '^Compi'|head -n1 |sed 's:Compiled\ by\ *::')
