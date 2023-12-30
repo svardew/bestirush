@@ -196,7 +196,7 @@ jobs:
           echo $fla > message-x
           cat messages | sed '/^\s*$/ d; /^From/ s:^:--> :' >> messages-x
           mv messages-x ../../../${{ env.LOGDIR }}/messages-${{ matrix.interp }}-${fla}
-          echo "cby=${fla}" >> $GITHUB_OUTPUT
+          echo "fla=${fla}" >> $GITHUB_OUTPUT
 
       - uses: actions/upload-artifact@v4
         id: upload-artifact-log
