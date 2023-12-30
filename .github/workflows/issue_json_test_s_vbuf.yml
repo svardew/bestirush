@@ -98,8 +98,8 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Check Filelist (for packaging)
-        run: |
         if: false
+        run: |
           # If any files in the repository are not listed in Filelist this will
           # exit with an error code and list the missing entries.
           make -f ci/unlisted.make
