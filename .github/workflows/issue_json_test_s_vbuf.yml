@@ -88,7 +88,7 @@ jobs:
             coverage: false
             interface: dynamic
             # extra: [uchar, testgui]
-            extra: [unittests, nogui]
+            extra: [unittests, nogui, uchar, testgui]
 
     steps:
       - name: Checkout repository from github
