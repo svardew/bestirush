@@ -14,6 +14,7 @@ jobs:
       CLANG_VER: 17
       LEAK_CFLAGS: -DEXITFREE
       LOG_DIR: ${{ github.workspace }}/logs
+      SRCDIR: ./src
       TERM: xterm
       DISPLAY: ':99'
       DEBIAN_FRONTEND: noninteractive
@@ -135,7 +136,7 @@ jobs:
         if: true
         run: |
           cd ./vim
-          /bin/true
+          # /bin/true
           # Append various warning flags to CFLAGS.
           sed -i -f ci/config.mk.sed ${SRCDIR}/auto/config.mk
           sed -i -f ci/config.mk.${CC}.sed ${SRCDIR}/auto/config.mk
