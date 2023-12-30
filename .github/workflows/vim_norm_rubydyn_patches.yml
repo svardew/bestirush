@@ -18,15 +18,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        patcha: ['', 'patch-0083']
+        patcha: ['patch-0083']
+        patchb: ['patch-0456']
+        patchc: ['patch-0491']
+        patchd: ['patch-0561']
+        patche: ['patch-0718']
+       #patcha: ['', 'patch-0083']
        #patchb: ['', 'patch-0456']
        #patchc: ['', 'patch-0491']
        #patchd: ['', 'patch-0561']
        #patche: ['', 'patch-0718']
-        patchb: ['']
-        patchc: ['']
-        patchd: ['']
-        patche: ['']
         interp: [dynamic]
 
     steps:
