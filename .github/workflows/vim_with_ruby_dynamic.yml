@@ -9,6 +9,14 @@ jobs:
   vim_patch:
     runs-on: ubuntu-22.04
     env:
+      CC: ${{ matrix.compiler }}
+      GCC_VER: 13
+      CLANG_VER: 17
+      LEAK_CFLAGS: -DEXITFREE
+      LOG_DIR: ${{ github.workspace }}/logs
+      TERM: xterm
+      DISPLAY: ':99'
+      DEBIAN_FRONTEND: noninteractive
       # patch 9.0.2189
       REF: 7e4f62a2575e8ce9ebb842d4246288138b11dff3
       CONFIG: "--disable-gui --disable-libsodium --with-features=normal --enable-rubyinterp=dynamic"
@@ -18,6 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        compiler: [gcc]
         interp: [dynamic]
         dllenv: [ldso, envvar]
 
@@ -120,12 +129,16 @@ jobs:
           cd ./vim
           patch src/testdir/test_ruby.vim --input ../${{ env.PATCHDIR }}/patch-test_ruby
           patch src/if_ruby.c --input ../${{ env.PATCHDIR }}/patch-if_ruby
-          ./configure ${{ env.CONFIG }} --enable-rubyinterp=${{ matrix.interp }} --with-compiledby=${str}
+          ./configure ${{ env.CONFIG }}  --with-compiledby=${str}
 
       - name: modify configure warnings
-        if: false
+        if: true
         run: |
+          cd ./vim
           /bin/true
+          # Append various warning flags to CFLAGS.
+          sed -i -f ci/config.mk.sed ${SRCDIR}/auto/config.mk
+          sed -i -f ci/config.mk.${CC}.sed ${SRCDIR}/auto/config.mk
 
       - name: build
         run: |
@@ -143,7 +156,7 @@ jobs:
           fi
           cd ./vim/src/testdir
           make test_ruby.res
-          echo '/* test_*.res count. if 0, no test success or skipped'
+          echo '/* test_*.res count.'
           echo ' */'
           find . -maxdepth 1 -type f -name 'test_*.res' | wc -l
           echo '/* cat messages. FAILDE or SKIPPED should not appear'
