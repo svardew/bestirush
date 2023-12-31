@@ -294,8 +294,8 @@ jobs:
           echo ' */'
           #patch-test_ruby #{{{
           touch patch-test_ruby
-          cp ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.orig
-          cp ./vim/src/testdir/test_ruby.vim ./test_ruby.vim.mod
+          cp ./src/testdir/test_ruby.vim ./test_ruby.vim.orig
+          cp ./src/testdir/test_ruby.vim ./test_ruby.vim.mod
           sed -i '/NoMethodError/ s,nil:NilClass,nil, ;' ./test_ruby.vim.mod
           diff -U 0 ./test_ruby.vim.orig ./test_ruby.vim.mod > patch-test_ruby
           rm ./test_ruby.vim.*
