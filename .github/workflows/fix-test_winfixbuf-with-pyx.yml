@@ -44,6 +44,7 @@ jobs:
           path: .
 
       - name: install python and python3
+        shell: bash {0}
         run: |
           PKGS=( \
             gettext \
@@ -70,12 +71,14 @@ jobs:
           )
           # sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
           sudo apt-get update && sudo apt-get install -y "${PKGS[@]}"
+          # libpython2.so may not exist. search latest version 2.7
+          # locate return 1 if not found. set shell without -e option (shell: bash {0})
           python3 --version
           which python3
-          locate libpyhon3.so
+          locate libpython3.so
           python --version
           which python
-          locate libpyhon.so
+          locate libpython2.7.so
 
       - name: configure, build, version check vim
         if: true
