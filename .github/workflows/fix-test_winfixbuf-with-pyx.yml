@@ -19,15 +19,15 @@ jobs:
       fail-fast: false
       matrix:
         pythons:
-          # "--enable-pythoninterp=no --enable-python3interp=yes"
           - "--enable-pythoninterp=no --enable-python3interp=yes"
-          # "--enable-pythoninterp=no --enable-python3interp=dynamic"
-          # "--enable-pythoninterp=yes --enable-python3interp=no"
-          # "--enable-pythoninterp=yes --enable-python3interp=yes"
-          # "--enable-pythoninterp=yes --enable-python3interp=dynamic"
-          # "--enable-pythoninterp=dynamic --enable-python3interp=no"
-          # "--enable-pythoninterp=dynamic --enable-python3interp=yes"
-          # "--enable-pythoninterp=dynamic --enable-python3interp=dynamic"
+          - "--enable-pythoninterp=no --enable-python3interp=yes"
+          - "--enable-pythoninterp=no --enable-python3interp=dynamic"
+          - "--enable-pythoninterp=yes --enable-python3interp=no"
+          - "--enable-pythoninterp=yes --enable-python3interp=yes"
+          - "--enable-pythoninterp=yes --enable-python3interp=dynamic"
+          - "--enable-pythoninterp=dynamic --enable-python3interp=no"
+          - "--enable-pythoninterp=dynamic --enable-python3interp=yes"
+          - "--enable-pythoninterp=dynamic --enable-python3interp=dynamic"
 
     steps:
       - name: begin
