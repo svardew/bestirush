@@ -58,19 +58,15 @@ jobs:
             gdb \
             lcov \
             libcanberra-dev \
-            libperl-dev \
             python2-dev \
             python3-dev \
-            liblua${LUA_VER}-dev \
-            lua${LUA_VER} \
-            ruby-dev \
-            tcl-dev \
             cscope \
             libsodium-dev \
             attr \
             libattr1-dev
           )
-          sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
+          # sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
+          sudo apt-get update && sudo apt-get install -y "${PKGS[@]}"
           python3 --version
           which python3
           locate libpyhon3.so
