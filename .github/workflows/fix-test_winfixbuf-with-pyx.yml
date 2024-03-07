@@ -18,16 +18,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pythons:
-          - "--enable-pythoninterp=no --enable-python3interp=yes"
-          - "--enable-pythoninterp=no --enable-python3interp=yes"
-          - "--enable-pythoninterp=no --enable-python3interp=dynamic"
-          - "--enable-pythoninterp=yes --enable-python3interp=no"
-          - "--enable-pythoninterp=yes --enable-python3interp=yes"
-          - "--enable-pythoninterp=yes --enable-python3interp=dynamic"
-          - "--enable-pythoninterp=dynamic --enable-python3interp=no"
-          - "--enable-pythoninterp=dynamic --enable-python3interp=yes"
-          - "--enable-pythoninterp=dynamic --enable-python3interp=dynamic"
+        pyx:
+          # {py2:no,  py3:yes}
+          # {py2:no,  py3:yes}
+          # {py2:no,  py3:dynamic}
+          # {py2:yes, py3:no}
+          # {py2:yes, py3:yes}
+          # {py2:yes, py3:dynamic}
+          - {py2:dynamic, py3:no}
+          # {py2:dynamic, py3:yes}
+          - {py2:dynamic, py3:dynamic}
 
     steps:
       - name: begin
@@ -75,14 +75,16 @@ jobs:
           python3 --version
           which python3
           # locate libpython3.so
-          python --version
-          which python
+          python2 --version
+          which python2
           # locate libpython2.7.so
+          echo 'check python command is python 2 or 3?'
+          ls -lagG $(which python)
 
       - name: configure, build, version check vim
         if: true
         run: |
-          ./configure ${{ env.CONFIG }} ${{ matrix.pythons }}
+          ./configure ${{ env.CONFIG }} --enable-pythoninterp=${{ matrix.pythons.py2 }} --enable-python3interp=${{ matrix.pythons.py3 }}
           make
           ./src/vim --version
 
