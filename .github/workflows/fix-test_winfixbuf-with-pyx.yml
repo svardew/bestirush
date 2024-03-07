@@ -45,7 +45,32 @@ jobs:
 
       - name: install python and python3
         run: |
-          sudo apt install python3 python3-dev python python-dev
+          PKGS=( \
+            gettext \
+            libgtk2.0-dev \
+            desktop-file-utils \
+            libtool-bin \
+            libncurses-dev \
+            libxt-dev \
+          )
+          PKGS+=( \
+            autoconf \
+            gdb \
+            lcov \
+            libcanberra-dev \
+            libperl-dev \
+            python2-dev \
+            python3-dev \
+            liblua${LUA_VER}-dev \
+            lua${LUA_VER} \
+            ruby-dev \
+            tcl-dev \
+            cscope \
+            libsodium-dev \
+            attr \
+            libattr1-dev
+          )
+          sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
           python3 --version
           which python3
           locate libpyhon3.so
