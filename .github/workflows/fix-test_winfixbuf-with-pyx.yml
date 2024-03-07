@@ -48,7 +48,6 @@ jobs:
         run: |
           PKGS=( \
             gettext \
-            libgtk2.0-dev \
             desktop-file-utils \
             libtool-bin \
             libncurses-dev \
@@ -75,10 +74,10 @@ jobs:
           # locate return 1 if not found. set shell without -e option (shell: bash {0})
           python3 --version
           which python3
-          locate libpython3.so
+          # locate libpython3.so
           python --version
           which python
-          locate libpython2.7.so
+          # locate libpython2.7.so
 
       - name: configure, build, version check vim
         if: true
