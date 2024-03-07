@@ -21,13 +21,13 @@ jobs:
         pythons:
           # "--enable-pythoninterp=no --enable-python3interp=yes"
           - "--enable-pythoninterp=no --enable-python3interp=yes"
-          - "--enable-pythoninterp=no --enable-python3interp=dynamic"
-          - "--enable-pythoninterp=yes --enable-python3interp=no"
-          - "--enable-pythoninterp=yes --enable-python3interp=yes"
-          - "--enable-pythoninterp=yes --enable-python3interp=dynamic"
-          - "--enable-pythoninterp=dynamic --enable-python3interp=no"
-          - "--enable-pythoninterp=dynamic --enable-python3interp=yes"
-          - "--enable-pythoninterp=dynamic --enable-python3interp=dynamic"
+          # "--enable-pythoninterp=no --enable-python3interp=dynamic"
+          # "--enable-pythoninterp=yes --enable-python3interp=no"
+          # "--enable-pythoninterp=yes --enable-python3interp=yes"
+          # "--enable-pythoninterp=yes --enable-python3interp=dynamic"
+          # "--enable-pythoninterp=dynamic --enable-python3interp=no"
+          # "--enable-pythoninterp=dynamic --enable-python3interp=yes"
+          # "--enable-pythoninterp=dynamic --enable-python3interp=dynamic"
 
     steps:
       - name: begin
@@ -63,7 +63,10 @@ jobs:
             cscope \
             libsodium-dev \
             attr \
-            libattr1-dev
+            libattr1-dev \
+          )
+          PKGS+=( \
+            locate \
           )
           # sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
           sudo apt-get update && sudo apt-get install -y "${PKGS[@]}"
