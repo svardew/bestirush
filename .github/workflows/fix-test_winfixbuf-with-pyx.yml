@@ -1,0 +1,73 @@
+name: ruby33-and-vim
+
+on:
+  push:
+    branches: ['acme']
+  workflow_dispatch:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  test_winfixbuf:
+    runs-on: ubuntu-22.04
+
+    env:
+      CONFIG: "--disable-gui --with-features=normal "
+
+    strategy:
+      fail-fast: false
+      matrix:
+        pythons:
+          # "--enable-pythoninterp=no --enable-python3interp=yes"
+          - "--enable-pythoninterp=no --enable-python3interp=yes"
+          - "--enable-pythoninterp=no --enable-python3interp=dynamic"
+          - "--enable-pythoninterp=yes --enable-python3interp=no"
+          - "--enable-pythoninterp=yes --enable-python3interp=yes"
+          - "--enable-pythoninterp=yes --enable-python3interp=dynamic"
+          - "--enable-pythoninterp=dynamic --enable-python3interp=no"
+          - "--enable-pythoninterp=dynamic --enable-python3interp=yes"
+          - "--enable-pythoninterp=dynamic --enable-python3interp=dynamic"
+
+    steps:
+      - name: begin
+        run: echo '--- v9.1.0152. +python +python3.'
+
+      - name: Checkout repository from github
+        if: true
+        uses: actions/checkout@v4
+        with:
+          # repository: vim/vim
+          repository: svardew/vim
+          # ref: v9.1.0152
+          ref: af7ae8160041e2d17c56945381e9370e7178e596
+          path: .
+
+      - name: install python and python3
+        run: |
+          sudo apt install python3 python3-dev python python-dev
+          python3 --version
+          which python3
+          locate libpyhon3.so
+          python --version
+          which python
+          locate libpyhon.so
+
+      - name: configure, build, version check vim
+        if: true
+        run: |
+          ./configure ${{ env.CONFIG }} ${{ matrix.pythons }}
+          make
+          ./src/vim --version
+
+      - name: run test_winfxbuf
+          cd ./src/testdir
+          echo 'runtest test_winfixbuf'
+          LC_ALL=C VIMRUNTIME=../../runtime make test_winfixbuf.res
+          echo '// cat messages. CheckFeature affect py2 relate command.'
+          cat messages
+
+      - name: close
+        if: true
+        run: |
+          echo '--- some test may fail, due to CheckFeature disable python.'
