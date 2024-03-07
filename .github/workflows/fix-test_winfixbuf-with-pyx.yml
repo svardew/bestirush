@@ -89,8 +89,8 @@ jobs:
       - name: run test_winfxbuf
         run: |
           cd ./src/testdir
-          echo 'runtest test_winfixbuf'
-          LC_ALL=C VIMRUNTIME=../../runtime make test_winfixbuf.res
+          echo 'runtest test_winfixbuf with TEST_FILTER=python'
+          LC_ALL=C VIMRUNTIME=../../runtime make test_winfixbuf.res TEST_FILTER=python
           echo '// cat messages. CheckFeature affect py2 relate command.'
           cat messages
 
