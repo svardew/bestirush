@@ -88,6 +88,42 @@ jobs:
           echo '// cat messages. CheckFeature affect py2 relate command.'
           cat messages
 
+      - name: run patched test_winfxbuf
+        shell: bash {0}
+        run: |
+          cd src
+          make testclean
+          cd testdir
+          touch patch-test_winfixbuf
+          cat <<'HEREDOC' | sed 's/^:\ //' > patch-test_winfixbuf
+          : --- test_winfixbuf.vim_orig
+          : +++ test_winfixbuf.vim
+          : @@ -2507 +2507 @@
+          : -  python << EOF
+          : +  pythonx << EOF
+          : @@ -2516,2 +2516,2 @@
+          : -    pydo test_winfixbuf_Test_python_pydo_set_buffer()
+          : -  catch /Vim(pydo):vim.error: Vim:E1513: Cannot edit buffer. 'winfixbuf' is enabled/
+          : +    pyxdo test_winfixbuf_Test_python_pydo_set_buffer()
+          : +  catch /Vim(pyxdo):vim.error: Vim:E1513: Cannot edit buffer. 'winfixbuf' is enabled/
+          : @@ -2547,2 +2547,2 @@
+          : -    pyfile file.py
+          : -  catch /Vim(pyfile):vim.error: Vim:E1513: Cannot edit buffer. 'winfixbuf' is enabled/
+          : +    pyxfile file.py
+          : +  catch /Vim(pyxfile):vim.error: Vim:E1513: Cannot edit buffer. 'winfixbuf' is enabled/
+          : @@ -2575 +2575 @@
+          : -    python << EOF
+          : +    pythonx << EOF
+          : @@ -2581 +2581 @@
+          : -  catch /Vim(python):vim\.error: Vim:E1513: Cannot edit buffer. 'winfixbuf' is enabled/
+          : +  catch /Vim(pythonx):vim\.error: Vim:E1513: Cannot edit buffer. 'winfixbuf' is enabled/
+          HEREDOC
+          patch test_winfixbuf.vim --input ./patch-test_winfixbuf
+          echo 'runtest test_winfixbuf with TEST_FILTER=python # patched test file'
+          LC_ALL=C VIMRUNTIME=../../runtime make test_winfixbuf.res TEST_FILTER=python
+          echo '// cat messages. pathced test expect pass 3 Test_python_* .'
+          cat messages
+
       - name: close
         if: true
         run: |
