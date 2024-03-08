@@ -9,48 +9,6 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  prepare:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout vim
-        if: true
-        uses: actions/checkout@v4
-        with:
-          # repository: vim/vim
-          repository: ${{ github.repository_owner }}/vim
-          # ref: v9.1.0152
-          ref: af7ae8160041e2d17c56945381e9370e7178e596
-          path: .
-      - name: install python and python3
-        if: true
-        run: |
-          PKGS=( \
-            gettext \
-            desktop-file-utils \
-            libtool-bin \
-            libncurses-dev \
-            libxt-dev \
-          )
-          PKGS+=( \
-            autoconf \
-            gdb \
-            lcov \
-            libcanberra-dev \
-            python2-dev \
-            python3-dev \
-            cscope \
-            libsodium-dev \
-            attr \
-            libattr1-dev \
-          )
-          sudo apt-get update && sudo apt-get install -y "${PKGS[@]}"
-          python3 --version
-          which python3
-          python2 --version
-          which python2
-          echo '// check python command is python 2 or 3'
-          ls -lagG $(which python)
-
   test_winfixbuf:
     runs-on: ubuntu-22.04
     needs: prepare
@@ -67,7 +25,7 @@ jobs:
         run: echo 'test_winfixbuf.vim fails at [py2,py3] combination'
 
       - name: Checkout repository from github
-        if: false
+        if: true
         uses: actions/checkout@v4
         with:
           # repository: vim/vim
@@ -77,7 +35,7 @@ jobs:
           path: .
 
       - name: install python and python3
-        if: false
+        if: true
         run: |
           PKGS=( \
             gettext \
@@ -165,11 +123,15 @@ jobs:
 
   summary:
     runs-on: ubuntu-22.04
+    needs: test_winfixbuf
     steps:
       - name: show summary
         shell: bash {0}
         run: |
           cat <<'HEREDOC' | sed 's/^:\ //'
+          : /**
+          :  * original test result
+          :  */
           : [py2][py3] . T_pydo  . T_pyfile  . T_vim_current_buf
           : ---
           :  no   no   . (pythx) . (pythx)   . (pythx)
@@ -184,6 +146,8 @@ jobs:
           : ---
           : E319: +py3 only build cannot do py2ish command (:pyfile, :pydo, ..)
           : E836: CheckFeature load py3 first, so py2ish command disabled.
+          : (pythx): after E386, it seems has('pythonx') not work
+          :
+          : patched test result is 8 of 9 matirx pass 3 Test_python_*.
           HEREDOC
-
 
