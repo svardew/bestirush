@@ -18,16 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pyx:
-          # {py2:no,  py3:yes}
-          # {py2:no,  py3:yes}
-          # {py2:no,  py3:dynamic}
-          # {py2:yes, py3:no}
-          # {py2:yes, py3:yes}
-          # {py2:yes, py3:dynamic}
-          - py2:dynamic, py3:no
-          # {py2:dynamic, py3:yes}
-          - py2:dynamic, py3:dynamic
+        py2: [no, yes, dynamic]
+        py3: [no, yes, dynamic]
 
     steps:
       - name: begin
@@ -84,7 +76,7 @@ jobs:
       - name: configure, build, version check vim
         if: true
         run: |
-          ./configure ${{ env.CONFIG }} --enable-pythoninterp=${{ matrix.pyx.py2 }} --enable-python3interp=${{ matrix.pyx.py3 }}
+          ./configure ${{ env.CONFIG }} --enable-pythoninterp=${{ matrix.py2 }} --enable-python3interp=${{ matrix.py3 }}
           make
           ./src/vim --version
 
