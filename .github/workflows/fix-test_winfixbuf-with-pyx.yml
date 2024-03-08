@@ -9,34 +9,20 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  test_winfixbuf:
+  prepare:
     runs-on: ubuntu-22.04
-
-    env:
-      CONFIG: "--disable-gui --with-features=normal "
-
-    strategy:
-      fail-fast: false
-      matrix:
-        py2: [no, yes, dynamic]
-        py3: [no, yes, dynamic]
-
     steps:
-      - name: begin
-        run: echo '--- v9.1.0152. +python +python3.'
-
-      - name: Checkout repository from github
+      - name: Checkout vim
         if: true
         uses: actions/checkout@v4
         with:
           # repository: vim/vim
-          repository: svardew/vim
+          repository: ${{ github.repository_owner }}/vim
           # ref: v9.1.0152
           ref: af7ae8160041e2d17c56945381e9370e7178e596
           path: .
-
       - name: install python and python3
-        shell: bash {0}
+        if: true
         run: |
           PKGS=( \
             gettext \
@@ -57,20 +43,67 @@ jobs:
             attr \
             libattr1-dev \
           )
+          sudo apt-get update && sudo apt-get install -y "${PKGS[@]}"
+          python3 --version
+          which python3
+          python2 --version
+          which python2
+          echo '// check python command is python 2 or 3'
+          ls -lagG $(which python)
+
+  test_winfixbuf:
+    runs-on: ubuntu-22.04
+    env:
+      CONFIG: "--disable-gui --with-features=normal"
+    strategy:
+      fail-fast: false
+      matrix:
+        py2: [no, yes, dynamic]
+        py3: [no, yes, dynamic]
+
+    steps:
+      - name: begin
+        run: echo 'test_winfixbuf.vim fails at [py2,py3] combination'
+
+      - name: Checkout repository from github
+        if: false
+        uses: actions/checkout@v4
+        with:
+          # repository: vim/vim
+          repository: ${{ github.repository_owner }}/vim
+          # ref: v9.1.0152
+          ref: af7ae8160041e2d17c56945381e9370e7178e596
+          path: .
+
+      - name: install python and python3
+        if: false
+        run: |
+          PKGS=( \
+            gettext \
+            desktop-file-utils \
+            libtool-bin \
+            libncurses-dev \
+            libxt-dev \
+          )
           PKGS+=( \
-            locate \
+            autoconf \
+            gdb \
+            lcov \
+            libcanberra-dev \
+            python2-dev \
+            python3-dev \
+            cscope \
+            libsodium-dev \
+            attr \
+            libattr1-dev \
           )
           # sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
           sudo apt-get update && sudo apt-get install -y "${PKGS[@]}"
-          # libpython2.so may not exist. search latest version 2.7
-          # locate return 1 if not found. set shell without -e option (shell: bash {0})
           python3 --version
           which python3
-          # locate libpython3.so
           python2 --version
           which python2
-          # locate libpython2.7.so
-          echo 'check python command is python 2 or 3?'
+          echo '// check python command is python 2 or 3'
           ls -lagG $(which python)
 
       - name: configure, build, version check vim
@@ -83,9 +116,9 @@ jobs:
       - name: run test_winfxbuf
         run: |
           cd ./src/testdir
-          echo 'runtest test_winfixbuf with TEST_FILTER=python'
+          echo '// do test_winfixbuf with TEST_FILTER=python'
           LC_ALL=C VIMRUNTIME=../../runtime make test_winfixbuf.res TEST_FILTER=python
-          echo '// cat messages. CheckFeature affect py2 relate command.'
+          echo '// cat messages. fail E319 or E386'
           cat messages
 
       - name: run patched test_winfxbuf
@@ -119,12 +152,37 @@ jobs:
           : +  catch /Vim(pythonx):vim\.error: Vim:E1513: Cannot edit buffer. 'winfixbuf' is enabled/
           HEREDOC
           patch test_winfixbuf.vim --input ./patch-test_winfixbuf
-          echo 'runtest test_winfixbuf with TEST_FILTER=python # patched test file'
+          echo '// do test_winfixbuf with TEST_FILTER=python'
           LC_ALL=C VIMRUNTIME=../../runtime make test_winfixbuf.res TEST_FILTER=python
-          echo '// cat messages. pathced test expect pass 3 Test_python_* .'
+          echo '// cat messages. expect all filterd 3 test success'
           cat messages
 
       - name: close
-        if: true
+        if: false
         run: |
-          echo '--- some test may fail, due to CheckFeature disable python.'
+          echo '--- some test may fail,'
+
+  summary:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: show summary
+        shell: bash {0}
+        run: |
+          cat <<'HEREDOC' | sed 's/^:\ //'
+          : [py2][py3] . T_pydo  . T_pyfile  . T_vim_current_buf
+          : ---
+          :  no   no   . (pythx) . (pythx)   . (pythx)
+          :  no   yes  .  E319   .  E319     .  E319
+          :  no   dyn  .  E319   .  E319     .  E319
+          :  yes  no   .  ~pass~ .  ~pass~   .  ~pass~
+          :  yes  yes  .  E836   . (pythx)   . (pythx)
+          :  yes  dyn  .  E836   . (pythx)   . (pythx)
+          :  dyn  no   .  ~pass~ .  ~pass~   .  ~pass~
+          :  dyn  yes  .  E836   . (pythx)   . (pythx)
+          :  dyn  dyn  .  E836   . (pythx)   . (pythx)
+          : ---
+          : E319: +py3 only build cannot do py2ish command (:pyfile, :pydo, ..)
+          : E836: CheckFeature load py3 first, so py2ish command disabled.
+          HEREDOC
+
+
