@@ -84,7 +84,7 @@ jobs:
       - name: configure, build, version check vim
         if: true
         run: |
-          ./configure ${{ env.CONFIG }} --enable-pythoninterp=${{ matrix.pythons.py2 }} --enable-python3interp=${{ matrix.pythons.py3 }}
+          ./configure ${{ env.CONFIG }} --enable-pythoninterp=${{ matrix.pyx.py2 }} --enable-python3interp=${{ matrix.pyx.py3 }}
           make
           ./src/vim --version
 
