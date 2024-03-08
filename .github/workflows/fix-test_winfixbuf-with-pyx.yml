@@ -25,9 +25,9 @@ jobs:
           # {py2:yes, py3:no}
           # {py2:yes, py3:yes}
           # {py2:yes, py3:dynamic}
-          - {py2:dynamic, py3:no}
+          - py2:dynamic, py3:no
           # {py2:dynamic, py3:yes}
-          - {py2:dynamic, py3:dynamic}
+          - py2:dynamic, py3:dynamic
 
     steps:
       - name: begin
