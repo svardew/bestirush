@@ -20,7 +20,7 @@ jobs:
         # ruby-2.2 always fail on ubuntu-22.04, work on ubuntu-20.04
         # ruby-2.x is EOL, so matrix include 2.7 (latest 2.x series)
         # rb: [1.9.3, 2.0.0, 2.2, 2.7, 3.0, 3.1, 3.2, 3.3]
-        rb: [1.9.3, 2.0.0, 2.7, '3.0', 3.1, 3.2, 3.3]
+        rb: ['1.9.3', '2.0.0', '2.7', '3.0', '3.1', '3.2', '3.3']
 
     steps:
       - name: Checkout repository from github
@@ -87,9 +87,14 @@ jobs:
           ./src/vim --version
 
       - name: test_ruby.vim
+        shell: bash {0}
         run: |
           cd ./src/testdir
           LC_ALL=C VIMRUNTIME=../../runtime make test_ruby.res
+          echo '/**'
+          echo ' * cat messages'
+          echo ' */'
+          cat messages
 
       - name: close
         if: false
@@ -104,9 +109,10 @@ jobs:
         if: false
         shell: bash {0}
         run: |
+          echo 1
+      - name: summary
+        if: true
+        run: |
           ruby -v
           which ruby
-      - name: summary
-        run: |
-          echo 1
 
