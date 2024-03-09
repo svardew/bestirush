@@ -89,7 +89,7 @@ jobs:
       - name: test_ruby.vim
         shell: bash {0}
         run: |
-          rubylibdir="$(ruby -rrbconfig -e'print RbConfig::CONFIG[%q/libdir/]')
+          rubylibdir="$(ruby -rrbconfig -e'print RbConfig::CONFIG[%q/libdir/]')"
           export LD_LIBRARY_PATH="${rubylibdir}:$LD_LIBRARY_PATH"
           cd ./src/testdir
           LC_ALL=C VIMRUNTIME=../../runtime make test_ruby.res
