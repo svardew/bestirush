@@ -29,8 +29,8 @@ jobs:
         with:
           # repository: vim/vim
           repository: ${{ github.repository_owner }}/vim
-          # ref: v9.1.0152
-          ref: af7ae8160041e2d17c56945381e9370e7178e596
+          # ref: 9.1.0161
+          ref: 13a014452a7a020a119ac555a690c65b41f3126d
           path: .
 
       - name: install python and python3
@@ -76,17 +76,19 @@ jobs:
           cd ./src/testdir
           echo '// do test_winfixbuf with TEST_FILTER=python'
           LC_ALL=C VIMRUNTIME=../../runtime make test_winfixbuf.res TEST_FILTER=python
-          echo '// cat messages. fail E319 or E386'
+          echo '// cat messages. fail E319 or E836'
           cat messages
 
       - name: run patched test_winfxbuf
+        if: false
         shell: bash {0}
         run: |
           cd src
           make testclean
           cd testdir
           touch patch-test_winfixbuf
-          cat <<'HEREDOC' | sed 's/^:\ //' > patch-test_winfixbuf
+          cat <<'HEREDOC' | sed 's/^:\ // ; s:^#[{}]\+$::' > patch-test_winfixbuf
+          : #{{{
           : --- test_winfixbuf.vim_orig
           : +++ test_winfixbuf.vim
           : @@ -2507 +2507 @@
@@ -108,6 +110,7 @@ jobs:
           : @@ -2581 +2581 @@
           : -  catch /Vim(python):vim\.error: Vim:E1513: Cannot edit buffer. 'winfixbuf' is enabled/
           : +  catch /Vim(pythonx):vim\.error: Vim:E1513: Cannot edit buffer. 'winfixbuf' is enabled/
+          : #}}}
           HEREDOC
           patch test_winfixbuf.vim --input ./patch-test_winfixbuf
           echo '// do test_winfixbuf with TEST_FILTER=python'
@@ -125,10 +128,11 @@ jobs:
     needs: test_winfixbuf
     steps:
       - name: show summary
+        if: false
         shell: bash {0}
         run: |
           cat <<'HEREDOC' | sed 's/^:\ //'
-          : /**
+          : /** #{{{
           :  * original test result
           :  */
           : [py2][py3] . T_pydo  . T_pyfile  . T_vim_current_buf
@@ -145,8 +149,12 @@ jobs:
           : ---
           : E319: +py3 only build cannot do py2ish command (:pyfile, :pydo, ..)
           : E836: CheckFeature load py3 first, so py2ish command disabled.
-          : (pythx): after E386, it seems has('pythonx') not work
+          : (pythx): after E836, it seems CheckFeature('pythonx') not work
           :
-          : patched test result is 8 of 9 matirx pass 3 Test_python_*.
+          : patched test result is 8 of 9 matirx pass 3 Test_python_*.  #}}}
           HEREDOC
+      - name: summary
+        run: |
+          echo 1
+
 
