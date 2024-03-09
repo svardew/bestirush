@@ -83,8 +83,13 @@ jobs:
         if: true
         run: |
           ./configure ${{ env.CONFIG }} --enable-rubyinterp=dynamic
-          # make
+          make
           ./src/vim --version
+
+      - name: test_ruby.vim
+        run: |
+          cd ./src/testdir
+          LC_ALL=C VIMRUNTIME=../../runtime make test_ruby.res
 
       - name: close
         if: false
