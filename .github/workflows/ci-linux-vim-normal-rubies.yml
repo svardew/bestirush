@@ -1,0 +1,109 @@
+name: linux vim(normal) with rubies (1.9+)
+
+on:
+  push:
+    branches: ['acme']
+  workflow_dispatch:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  test_winfixbuf:
+    runs-on: ubuntu-22.04
+    env:
+      CONFIG: "--disable-gui --with-features=normal"
+    strategy:
+      fail-fast: false
+      matrix:
+        rb: [1.9.3, 2.0.0, 2.2, 2.7, 3.0, 3.1, 3.2, 3.3]
+
+    steps:
+      - name: Checkout repository from github
+        if: true
+        uses: actions/checkout@v4
+        with:
+          # repository: vim/vim
+          repository: ${{ github.repository_owner }}/vim
+          # ref: 9.1.0161
+          # ref: 13a014452a7a020a119ac555a690c65b41f3126d
+          path: .
+
+      - name: check system ruby
+        run: |
+          echo "/**"
+          echo " * check system ruby version"
+          echo " */"
+          ruby -v
+          which ruby
+
+      - name: install ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ruby-${{ matrix.rb }}
+
+      - name: check current ruby
+        run: |
+          echo "/**"
+          echo " * check current ruby version"
+          echo " * expect ruby/setup-ruby version"
+          echo " */"
+          ruby -v
+          which ruby
+
+      - name: install pkg
+        if: false
+        run: |
+          PKGS=( \
+            gettext \
+            desktop-file-utils \
+            libtool-bin \
+            libncurses-dev \
+            libxt-dev \
+          )
+          PKGS+=( \
+            autoconf \
+            gdb \
+            lcov \
+            libcanberra-dev \
+            python2-dev \
+            python3-dev \
+            cscope \
+            libsodium-dev \
+            attr \
+            libattr1-dev \
+          )
+          # sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
+          sudo apt-get update && sudo apt-get install -y "${PKGS[@]}"
+          python3 --version
+          which python3
+          python2 --version
+          which python2
+          echo '// check python command is python 2 or 3'
+          ls -lagG $(which python)
+
+      - name: configure, build, version check vim
+        if: false
+        run: |
+          ./configure ${{ env.CONFIG }} --enable-pythoninterp=${{ matrix.py2 }} --enable-python3interp=${{ matrix.py3 }}
+          make
+          ./src/vim --version
+
+      - name: close
+        if: false
+        run: |
+          echo '--- some test may fail,'
+
+  summary:
+    runs-on: ubuntu-22.04
+    needs: test_winfixbuf
+    steps:
+      - name: show summary
+        if: false
+        shell: bash {0}
+        run: |
+          echo 1
+      - name: summary
+        run: |
+          echo 1
+
