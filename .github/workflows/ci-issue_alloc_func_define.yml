@@ -88,7 +88,7 @@ jobs:
           # - use define_alloc_func
           f='patch-if_ruby--undef_alloc_func'
           touch $f
-          cat <<'HEREDOC' | sed 's/^:\ //; s/^#[{}]+$//;' > $f
+          cat <<'HEREDOC' | sed '$d; 1d; s/^:\ //;' > $f
           : #{{{
           : --- ./if_ruby.c.orig
           : +++ ./if_ruby.c.mod
@@ -101,7 +101,7 @@ jobs:
           # yank modeline, append 2 Test_*, set modeline
           modeline=$(tail -n1 src/testdir/test_ruby.vim)
           sed -i '$ s,.*,,'   src/testdir/test_ruby.vim
-          cat <<'HEREDOC' | sed 's/^:\ //; s/^#[{}]+$//;' >> src/testdir/test_ruby.vim
+          cat <<'HEREDOC' | sed '$d; 1d; s/^:\ //;' >> src/testdir/test_ruby.vim
           : # {{{
           : func Test_ruby_alloc_warning_cBuffer()
           :   redir => warn
@@ -124,7 +124,7 @@ jobs:
           : endfunc
           : # }}}
           HEREDOC
-          echo $modeline >> src/testdir/test_ruby.vim
+          echo $model >> src/testdir/test_ruby.vim
           cat  src/testdir/test_ruby.vim
 
       - name: configure, build, version check vim
