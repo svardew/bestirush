@@ -1,4 +1,4 @@
-name: linux vim(normal) with rubies (1.9+)
+name: issue T_DATA alloc func warning
 
 on:
   push:
@@ -80,7 +80,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y "${PKGS[@]}"
 
       - name: patch src/if_ruby.c, new testfile check T_DATA warnig
-        if: false
+        if: true
         shell: bash {0}
         run: |
           # prepare 2 type patch.
@@ -125,6 +125,7 @@ jobs:
           : # }}}
           HEREDOC
           echo $modeline >> src/testdir/test_ruby.vim
+          cat  src/testdir/test_ruby.vim
 
       - name: configure, build, version check vim
         if: true
