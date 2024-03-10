@@ -1,0 +1,167 @@
+name: linux vim(normal) with rubies (1.9+)
+
+on:
+  push:
+    branches: ['acme']
+  workflow_dispatch:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  vim_with_ruby:
+    runs-on: ubuntu-22.04
+    env:
+      CONFIG: "--disable-gui --with-features=normal"
+    strategy:
+      fail-fast: false
+      matrix:
+        # https://github.com/ruby/setup-ruby/issues/496
+        # ruby-2.2 always fail on ubuntu-22.04, work on ubuntu-20.04
+        # ruby-2.x is EOL, so omit 2.2
+        # rb: [1.9.3, 2.0.0, 2.2, 2.7, 3.0, 3.1, 3.2, 3.3]
+        rb: ['1.9.3', '2.0.0', '2.7', '3.0', '3.1', '3.2', '3.3']
+
+    steps:
+      - name: Checkout repository from github
+        if: true
+        uses: actions/checkout@v4
+        with:
+          # repository: vim/vim
+          # ref: 9.1.0161
+          # ref: 13a014452a7a020a119ac555a690c65b41f3126d
+          repository: ${{ github.repository_owner }}/vim
+          path: .
+
+      - name: check system ruby
+        run: |
+          echo "/**"
+          echo " * check system ruby version"
+          echo " */"
+          ruby -v
+          which ruby
+
+      - name: install ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ruby-${{ matrix.rb }}
+
+      - name: check current ruby
+        run: |
+          echo "/**"
+          echo " * check current ruby version"
+          echo " * expect ruby/setup-ruby version"
+          echo " */"
+          ruby -v
+          which ruby
+
+      - name: install pkg
+        if: false
+        run: |
+          PKGS=( \
+            gettext \
+            desktop-file-utils \
+            libtool-bin \
+            libncurses-dev \
+            libxt-dev \
+          )
+          PKGS+=( \
+            build-essential \
+            autoconf \
+            gdb \
+            lcov \
+            libcanberra-dev \
+            cscope \
+            libsodium-dev \
+            attr \
+            libattr1-dev \
+          )
+          # sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
+          sudo apt-get update && sudo apt-get install -y "${PKGS[@]}"
+
+      - name: patch src/if_ruby.c, new testfile check T_DATA warnig
+        if: false
+        shell: bash {0}
+        run: |
+          # prepare 2 type patch.
+          # - use undef_alloc_func
+          # - use define_alloc_func
+          f='patch-if_ruby--undef_alloc_func'
+          touch $f
+          cat <<'HEREDOC' | sed 's/^:\ //; s/^#[{}]+$//;' > $f
+          : #{{{
+          : --- ./if_ruby.c.orig
+          : +++ ./if_ruby.c.mod
+          : #}}}
+          HEREDOC
+          # diff -U 0 ./test_ruby.vim.orig ./test_ruby.vim.mod > patch-test_ruby
+          patch src/if_ruby.c --input $f
+          nr=$(wc -l src/testdir/test_rubyvim)
+          model=$(tail -n1 src/testdir/test_ruby.vim)
+          # yank modeline, append 2 Test_*, set modeline
+          modeline=$(tail -n1 src/testdir/test_ruby.vim)
+          sed -i '$ s,.*,,'   src/testdir/test_ruby.vim
+          cat <<'HEREDOC' | sed 's/^:\ //; s/^#[{}]+$//;' >> src/testdir/test_ruby.vim
+          : # {{{
+          : func Test_ruby_alloc_warning_cBuffer()
+          :   redir => warn
+          :   silent ruby Vim::Buffer.current
+          :   redir END
+          :   if match(warn, 'warning: undefining the allocator of T_DATA class') > -1
+          :     throw 'warn if_ruby cBuffer must be set by calling rb_define_alloc_func or rb_undef_alloc_func'
+          :   endif
+          :   unlet! warn
+          : endfunc
+          : 
+          : func Test_ruby_alloc_warning_cVimWindow()
+          :   redir => warn
+          :   silent ruby Vim::Window.current
+          :   redir END
+          :   if match(warn, 'warning: undefining the allocator of T_DATA class') > -1
+          :     throw 'warn if_ruby cVimWindow must be set by calling rb_define_alloc_func or rb_undef_alloc_func'
+          :   endif
+          :   unlet! warn
+          : endfunc
+          : # }}}
+          HEREDOC
+          echo $modeline >> src/testdir/test_ruby.vim
+
+      - name: configure, build, version check vim
+        if: true
+        run: |
+          ./configure ${{ env.CONFIG }} --enable-rubyinterp=dynamic
+          make
+          ./src/vim --version
+
+      - name: test_ruby.vim
+        shell: bash {0}
+        run: |
+          rubylibdir="$(ruby -rrbconfig -e'print RbConfig::CONFIG[%q/libdir/]')"
+          export LD_LIBRARY_PATH="${rubylibdir}:$LD_LIBRARY_PATH"
+          cd ./src/testdir
+          LC_ALL=C VIMRUNTIME=../../runtime make test_ruby.res TEST_FILTER=alloc_warning
+          echo '/**'
+          echo ' * cat messages'
+          echo ' */'
+          cat messages
+
+      - name: close
+        if: false
+        run: |
+          echo '--- some test may fail,'
+
+  summary:
+    runs-on: ubuntu-22.04
+    needs: vim_with_ruby
+    steps:
+      - name: show summary
+        if: false
+        shell: bash {0}
+        run: |
+          echo 1
+      - name: summary
+        if: true
+        run: |
+          ruby -v
+          which ruby
+
