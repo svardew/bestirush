@@ -88,20 +88,38 @@ jobs:
           # - use define_alloc_func
           f='patch-if_ruby--undef_alloc_func'
           touch $f
-          cat <<'HEREDOC' | sed '$d; 1d; s/^:\ //;' > $f
+          cat <<'HEREDOC' | sed '1d; s/^:\ //; $d' > $f
           : #{{{
-          : --- ./if_ruby.c.orig
-          : +++ ./if_ruby.c.mod
+          : --- if_ruby.c
+          : +++ if_ruby.c_mod
+          : @@ -255,0 +256,3 @@
+          : +# if RUBY_VERSION >= 32
+          : +#  define rb_undef_alloc_func		dll_rb_undef_alloc_func
+          : +# endif
+          : @@ -387,0 +391,3 @@
+          : +# if RUBY_VERSION >= 32
+          : +static void (*dll_rb_undef_alloc_func) (VALUE);
+          : +# endif
+          : @@ -646,0 +653,3 @@
+          : +# if RUBY_VERSION >= 32
+          : +    {"rb_undef_alloc_func", (RUBY_PROC*)&dll_rb_undef_alloc_func},
+          : +# endif
+          : @@ -1759,0 +1769,3 @@
+          : +# if RUBY_VERSION >= 32
+          : +    rb_undef_alloc_func(cBuffer);
+          : +# endif
+          : @@ -1779,0 +1792,3 @@
+          : +# if RUBY_VERSION >= 32
+          : +    rb_undef_alloc_func(cVimWindow);
+          : +# endif
           : #}}}
           HEREDOC
-          # diff -U 0 ./test_ruby.vim.orig ./test_ruby.vim.mod > patch-test_ruby
           patch src/if_ruby.c --input $f
-          nr=$(wc -l src/testdir/test_rubyvim)
-          model=$(tail -n1 src/testdir/test_ruby.vim)
-          # yank modeline, append 2 Test_*, set modeline
-          modeline=$(tail -n1 src/testdir/test_ruby.vim)
-          sed -i '$ s,.*,,'   src/testdir/test_ruby.vim
-          cat <<'HEREDOC' | sed '$d; 1d; s/^:\ //;' >> src/testdir/test_ruby.vim
+          # prepare test
+          # - yank modeline, append 2 Test_*, set modeline
+          modeln=$(tail -n1 src/testdir/test_ruby.vim)
+          sed -i '$ s,.*,,' src/testdir/test_ruby.vim
+          cat <<'HEREDOC' | sed '1d; s/^:\ //; $d' | tee -a src/testdir/test_ruby.vim
           : # {{{
           : func Test_ruby_alloc_warning_cBuffer()
           :   redir => warn
@@ -124,7 +142,7 @@ jobs:
           : endfunc
           : # }}}
           HEREDOC
-          echo $model >> src/testdir/test_ruby.vim
+          echo $modeln >> src/testdir/test_ruby.vim
           cat  src/testdir/test_ruby.vim
 
       - name: configure, build, version check vim
