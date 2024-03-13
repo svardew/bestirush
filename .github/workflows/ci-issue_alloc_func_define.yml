@@ -41,14 +41,19 @@ jobs:
           # ref: 9.1.0161
           # ref: 13a014452a7a020a119ac555a690c65b41f3126d
           repository: ${{ github.repository_owner }}/dew
-          sparse-checkout: patch-if_ruby
+          sparse-checkout: |
+            patch-if_ruby
+            # patch-if_ruby/if_ruby.c-patch
+            # patch-if_ruby/test_ruby.vim-patch
+          sparse-checkout-cone-mode: false
           path: _patchdir
 
       - name: ls .
         if: true
         run: |
-          ls .
-          tree _patchdir
+          ls -p .
+          echo '/** _patchdir */'
+          ls -lagG _patchdir
           exit 1
 
       - name: check system ruby
