@@ -1,0 +1,23 @@
+--- test_ruby.vim-orig
++++ test_ruby.vim
+@@ -451,0 +452,20 @@
++func Test_ruby_alloc_cBuffer()
++  redir => msg
++  silent ruby Vim::Buffer.current
++  redir END
++  if match(msg, 'warning: undefining the allocator of T_DATA class') > -1
++    throw 'ruby warn cBuffer need rb_define_alloc_func or rb_undef_alloc_func'
++  endif
++  unlet! msg
++endfunc
++
++func Test_ruby_alloc_cVimWindow()
++  redir => msg
++  silent ruby Vim::Window.current
++  redir END
++  if match(msg, 'warning: undefining the allocator of T_DATA class') > -1
++    throw 'ruby warn cVimWindow need rb_define_alloc_func or rb_undef_alloc_func'
++  endif
++  unlet! msg
++endfunc
++
