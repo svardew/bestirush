@@ -9,7 +9,7 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  vim_with_ruby:
+  vim_with_rubies:
     runs-on: ubuntu-22.04
     env:
       CONFIG: "--disable-gui --with-features=normal"
@@ -84,7 +84,7 @@ jobs:
         shell: bash {0}
         run: |
           # prepare 2 type patch.
-          # - use undef_alloc_func
+          # - use undef_alloc_func #=> all 7 rubies pass test...
           # - use define_alloc_func
           f='patch-if_ruby--undef_alloc_func'
           touch $f
@@ -145,18 +145,25 @@ jobs:
           echo $modeln >> src/testdir/test_ruby.vim
           cat  src/testdir/test_ruby.vim
 
-      - name: configure, build, version check vim
-        if: true
+      - name: configure (+ruby/dyn), build, version check vim
+        if: false
         run: |
           ./configure ${{ env.CONFIG }} --enable-rubyinterp=dynamic
+          make
+          ./src/vim --version
+
+      - name: configure (+ruby), build, version check vim
+        if: true
+        run: |
+          ./configure ${{ env.CONFIG }} --enable-rubyinterp=yes
           make
           ./src/vim --version
 
       - name: test_ruby.vim
         shell: bash {0}
         run: |
-          rubylibdir="$(ruby -rrbconfig -e'print RbConfig::CONFIG[%q/libdir/]')"
-          export LD_LIBRARY_PATH="${rubylibdir}:$LD_LIBRARY_PATH"
+          # rubylibdir="$(ruby -rrbconfig -e'print RbConfig::CONFIG[%q/libdir/]')"
+          # export LD_LIBRARY_PATH="${rubylibdir}:$LD_LIBRARY_PATH"
           cd ./src/testdir
           LC_ALL=C VIMRUNTIME=../../runtime make test_ruby.res TEST_FILTER=alloc_warning
           echo '/**'
@@ -171,7 +178,7 @@ jobs:
 
   summary:
     runs-on: ubuntu-22.04
-    needs: vim_with_ruby
+    needs: vim_with_rubies
     steps:
       - name: show summary
         if: false
