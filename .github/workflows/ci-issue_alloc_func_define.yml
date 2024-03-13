@@ -42,12 +42,13 @@ jobs:
           # ref: 13a014452a7a020a119ac555a690c65b41f3126d
           repository: ${{ github.repository_owner }}/dew
           sparse-checkout: patch-if_ruby
-          path: .
+          path: _patchdir
 
       - name: ls .
         if: true
         run: |
           ls .
+          tree _patchdir
           exit 1
 
       - name: check system ruby
