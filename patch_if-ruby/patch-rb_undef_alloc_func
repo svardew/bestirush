@@ -1,0 +1,22 @@
+--- if_ruby.c
++++ if_ruby.c_mod
+@@ -255,0 +256,3 @@
++# if RUBY_VERSION >= 32
++#  define rb_undef_alloc_func		dll_rb_undef_alloc_func
++# endif
+@@ -387,0 +391,3 @@
++# if RUBY_VERSION >= 32
++static void (*dll_rb_undef_alloc_func) (VALUE);
++# endif
+@@ -646,0 +653,3 @@
++# if RUBY_VERSION >= 32
++    {"rb_undef_alloc_func", (RUBY_PROC*)&dll_rb_undef_alloc_func},
++# endif
+@@ -1759,0 +1769,3 @@
++# if RUBY_VERSION >= 32
++    rb_undef_alloc_func(cBuffer);
++# endif
+@@ -1779,0 +1792,3 @@
++# if RUBY_VERSION >= 32
++    rb_undef_alloc_func(cVimWindow);
++# endif
