@@ -108,7 +108,8 @@ jobs:
           fi
           echo "SODIUM_DIR=${SODIUM_DIR}" >> $GITHUB_ENV
 
-      - uses: msys2/setup-msys2@v2
+      - name: msys2/setup-msys2 v2
+        uses: msys2/setup-msys2@v2
         if: matrix.toolchain == 'mingw'
         with:
           update: true
@@ -144,7 +145,7 @@ jobs:
       - name: setup-ruby
         if: false && matrix.toolchain == 'mingw'
         # if: false
-        uses: ruby/setup-ruby
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ env.RUBY_VER_DOT }}
 
