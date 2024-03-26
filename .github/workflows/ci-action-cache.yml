@@ -9,6 +9,9 @@ jobs:
   acme:
    env:
       LOG_DIR: ${{ github.workspace }}/logs
+  steps:
+    - name: noop
+      run: /bin/true
 
   windows:
     runs-on: windows-2022
