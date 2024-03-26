@@ -139,6 +139,7 @@ jobs:
           echo %LUA_RELEASE%>> urls.txt
           echo %WINPTY_URL%>> urls.txt
           echo %SODIUM_VER%>> urls.txt
+          type urls.txt
 
       - name: Cache downloaded files
         uses: actions/cache@v4
@@ -209,7 +210,7 @@ jobs:
           goto :eof
 
       - name: force exit
-        if: false
+        if: true
         shell: msys2 {0}
         run: |
           echo 'cache download ok? bye.'
@@ -284,7 +285,7 @@ jobs:
         shell: cmd
         run: |
           PATH %LUA_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%;%PYTHON3_DIR%
-          #TODO: PATH %RUBY_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%
+          :: #TODO: PATH %RUBY_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%
           if "${{ matrix.GUI }}"=="yes" (
             start /wait src\gvim -u NONE -i NONE -c "redir > version.txt | ver | q" || exit 1
             type version.txt
@@ -335,8 +336,8 @@ jobs:
         shell: cmd
         timeout-minutes: 15
         run: |
-          # PATH %LUA_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%;%PYTHON3_DIR%;%SODIUM_LIB%
-          #TODO: PATH %RUBY_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%
+          PATH %LUA_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%;%PYTHON3_DIR%;%SODIUM_LIB%
+          :: #TODO: PATH %RUBY_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%
           call "%VCVARSALL%" %VCARCH%
 
           echo %COL_GREEN%Test Vim:%COL_RESET%
