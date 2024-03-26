@@ -7,11 +7,11 @@ permissions:
 
 jobs:
   acme:
-   env:
+    env:
       LOG_DIR: ${{ github.workspace }}/logs
-  steps:
-    - name: noop
-      run: /bin/true
+    steps:
+      - name: noop
+        run: /bin/true
 
   windows:
     runs-on: windows-2022
