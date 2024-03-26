@@ -163,7 +163,7 @@ jobs:
 
       - name: force exit
         if: false
-        shell: msys2 {0}
+        shell: bash {0}
         run: |
           exit 1
 
@@ -211,7 +211,7 @@ jobs:
 
       - name: force exit
         if: true
-        shell: msys2 {0}
+        shell: bash {0}
         run: |
           echo 'cache download ok? bye.'
           exit 1
