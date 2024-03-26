@@ -1,6 +1,6 @@
 name: action cache usage
 
-on: workflow-dispatch
+on: workflow_dispatch
 
 permissions:
   contents: read # to fetch code (actions/checkout)
