@@ -524,8 +524,12 @@ jobs:
           test -f downloads/winpty.zip       ||  nocache=${nocache}.winpty
           test -f downloads/libsodium.zip    ||  nocache=${nocache}.msvcsodium
           test -f downloads/libsodium.tar.gz ||  nocache=${nocache}.mingwsodium
-          echo "list up not exist file: " $nocache
-          echo "result=${{ $nocache == '' && 'true' || 'false' }}" >> $GITHUB_OUTPUT
+          if [ -n "$nocache" ]; then
+            echo "list up not exist file: " $nocache
+            echo "result=false" >> $GITHUB_OUTPUT
+          else
+            echo "result=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Download dependencies
         id: download_dependencies
