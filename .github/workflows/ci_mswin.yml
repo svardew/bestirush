@@ -299,10 +299,10 @@ jobs:
           for f in $(grep -lR '#[[:digit:]]* *0x[[:xdigit:]]*' "${LOG_DIR}"); do
             asan_symbolize -l "$f"
             false # in order to fail a job
-          done
+          done #}}}
 
   macos:
-    if: false
+    if: false #{{{
     runs-on: ${{ matrix.runner }}
 
     env:
@@ -386,8 +386,109 @@ jobs:
         run: |
           make ${TEST} # }}}
 
-  windows:
+  windows_cache:
+    if: false #{{{
     runs-on: windows-2022
+
+    env:
+      # Lua
+      LUA_RELEASE: 5.4.2
+      LUA32_URL: https://downloads.sourceforge.net/luabinaries/lua-%LUA_RELEASE%_Win32_dllw6_lib.zip
+      LUA64_URL: https://downloads.sourceforge.net/luabinaries/lua-%LUA_RELEASE%_Win64_dllw6_lib.zip
+      LUA32_FILE: lua-%LUA_RELEASE%_Win32_dllw6_lib.zip
+      LUA64_FILE: lua-%LUA_RELEASE%_Win64_dllw6_lib.zip
+      # winpty
+      WINPTY_URL: https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip
+      WINPTY_FILE: winpty-0.4.3-msvc2015.zip
+      # libsodium
+      SODIUM_VER: '1.0.19'
+      SODIUM_MSVC_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-msvc.zip
+      SODIUM_MINGW_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-mingw.tar.gz
+      SODIUM_MSVC_FILE: libsodium-%SODIUM_VER%-stable-msvc.zip
+      SODIUM_MINGW_FILE: libsodium-%SODIUM_VER%-stable-mingw.tar.gz
+
+    steps:
+      - name: Create cache list
+        shell: cmd
+        run: |
+          type NUL > urls.txt
+          echo %LUA32_FILE% >> cachefiles.txt
+          echo %LUA64_FILE% >> cachefiles.txt
+          echo %WINPTY_FILE% >> cachefiles.txt
+          echo %SODIUM_MSVC_FILE% >> cachefiles.txt
+          echo %SODIUM_MINGW_FILE% >> cachefiles.txt
+
+      - name: Restore cache files
+        uses: actions/cache/restore@v4
+        with:
+          path: downloads
+          key: ${{ runner.os }}-dependencies-${{ hashFiles('cachefiles.txt') }}
+
+      - name: Verify cache files
+        id: verify
+        shell: bash -e {0}
+        run: |
+          test -d downloads || mkdir downloads
+          xargs -a cachefiles.txt -I{} test -f 'downloas/'{}
+          if $?
+          then
+            echo "cached=false" >> $GITHUB_OUTPUT
+            echo "some files not cached"
+            echo "List:"
+            cat cachefiles.txt
+            echo "Files:"
+            ls downloads
+          else
+            echo "cached=true" >> $GITHUB_OUTPUT
+            echo "all files cached"
+          fi
+
+      - name: Download dependencies
+        id: download
+        if: ${{ steps.verify.cached == 'false' }}
+        shell: cmd
+        run: |
+          echo %COL_GREEN%Download Lua%COL_RESET%
+          call :downloadfile %LUA32_URL% downloads\%LUA32_FILE%
+          call :downloadfile %LUA64_URL% downloads\%LUA64_FILE%
+
+          echo %COL_GREEN%Download winpty%COL_RESET%
+          call :downloadfile %WINPTY_URL% downloads\%WINPTY_FILE%
+
+          echo %COL_GREEN%Download libsodium%COL_RESET%
+          call :downloadfile %SODIUM_MSVC_URL% downloads\%SODIUM_MSVC_FILE%
+          call :downloadfile %SODIUM_MINGW_URL% downloads\%SODIUM_MINGW_FILE%
+
+          goto :eof
+
+          :downloadfile
+          :: call :downloadfile <URL> <localfile>
+          if not exist %2 (
+            curl -f -L %1 -o %2
+          )
+          if ERRORLEVEL 1 (
+            rem Retry once.
+            curl -f -L %1 -o %2 || exit 1
+          )
+          goto :eof
+
+      - name: Save cache
+        if: ${{ steps.verify.cache.result == 'false' }} && steps.download.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: downloads
+          key: ${{ runner.os }}-dependencies-${{ hashFiles('cachefiles.txt') }}
+
+      - name: noop
+        shell: bash
+        run: |
+          echo File: ${{ runner.os }}-dependencies-${{ hashFiles('cachefiles.txt') }}
+          echo "now, all cache files are stored in cache-archive" # }}}
+
+  windows:
+    if: false #{{{
+    runs-on: windows-2022
+    needs: [windows_cache]
 
     env:
       # Interfaces
@@ -732,4 +833,5 @@ jobs:
       - name: noop
         shell: bash
         run: |
-          ls -lagG downloads
+          ls -lagG downloads #}}}
+
