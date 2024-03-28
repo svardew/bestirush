@@ -573,11 +573,16 @@ jobs:
           goto :eof
 
       - name: Save downloaded denendencies cache
+        needs: [download_dependencies]
         if: ${{ steps.checkcache.result == 'false' }} && steps.download_dependencies.outcome == 'success'
         uses: actions/cache/save@v4
         with:
           path: downloads
           key: ${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('urls.txt') }}
+
+      - name: noop exit
+        shell: bash
+        run: exit 1
 
       - name: Build (MSVC)
         if: matrix.toolchain == 'msvc'
