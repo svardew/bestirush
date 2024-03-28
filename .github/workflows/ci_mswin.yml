@@ -573,7 +573,7 @@ jobs:
           goto :eof
 
       - name: Save downloaded denendencies cache
-        needs: [download_dependencies]
+        need: [download_dependencies]
         if: ${{ steps.checkcache.result == 'false' }} && steps.download_dependencies.outcome == 'success'
         uses: actions/cache/save@v4
         with:
