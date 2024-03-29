@@ -430,7 +430,7 @@ jobs:
 
       - name: Verify cache files
         id: verify
-        shell: bash -e {0}
+        shell: bash {0}
         run: |
           test -d downloads || mkdir downloads
           xlist=$(cat cachefiles.txt |sort)
@@ -440,20 +440,22 @@ jobs:
           then
             echo "cached=false" >> $GITHUB_OUTPUT
             echo "some files not cached"
-            echo "List:"
+            echo "/* List: */"
             cat cachefiles.txt
-            echo "Files:"
+            echo "/* Files in downloads */"
             ls downloads
           else
             echo "cached=true" >> $GITHUB_OUTPUT
             echo "all files cached"
           fi
+
       - name: noop
-        if: false
+        if: true
         shell: bash
         run: |
           cat cachefiles.txt
           ls downloads
+          echo ___${{ steps.verify.cached }}---
           exit 1
 
       - name: Download dependencies
