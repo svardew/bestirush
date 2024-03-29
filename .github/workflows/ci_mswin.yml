@@ -386,9 +386,8 @@ jobs:
         run: |
           make ${TEST} # }}}
 
-  windows_cache:
+  windows-cache:
     if: false #{{{
-    id: windows_cache
     runs-on: windows-2022
 
     env:
@@ -489,7 +488,7 @@ jobs:
   windows:
     if: false #{{{
     runs-on: windows-2022
-    needs: [windows_cache]
+    needs: [windows-cache]
 
     env:
       # Interfaces
