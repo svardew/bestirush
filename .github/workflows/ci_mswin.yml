@@ -429,8 +429,10 @@ jobs:
         shell: bash -e {0}
         run: |
           test -d downloads || mkdir downloads
-          xargs -a cachefiles.txt -I{} test -f 'downloas/'{}
-          if $?
+          xlist=$(cat cachefiles.txt |sort)
+          xfile=$(ls downloads/ |sort)
+          # xargs -a cachefiles.txt -I{} test -f 'downloas/'{}
+          if [ "$xslist" = "$xfile" ]
           then
             echo "cached=false" >> $GITHUB_OUTPUT
             echo "some files not cached"
