@@ -413,22 +413,22 @@ jobs:
       - name: setup env
         shell: bash
         run: |
-          LUA32_FILE=lua-${{ env.LUA_RELEASE }}_Win32_dllw6_lib.zip
-          LUA64_FILE=lua-${{ env.LUA_RELEASE }}_Win64_dllw6_lib.zip
-          LUA32_URL=${{ env.LUA_BINARIES_URL }}/${LUA32_FILE}
-          LUA64_URL=${{ env.LUA_BINARIES_URL }}/${LUA64_FILE}
-          SODIUM_MSVC_FILE=libsodium-${{ env.SODIUM_VER }}-stable-msvc.zip
-          SODIUM_MINGW_FILE=libsodium-${{ env.SODIUM_VER }}-stable-mingw.tar.gz
-          SODIUM_MSVC_URL=${{ env.SODIUM_RELEASE_URL }}/${SODIUM_MSVC_FILE}
-          SODIUM_MINGW_URL=${{ env.SODIUM_RELEASE_URL }}/${SODIUM_MINGW_FILE}
-          echo LUA32_FILE=${LUA32_FILE} >> $GITHUB_OUTPUT
-          echo LUA64_FILE=${LUA64_FILE} >> $GITHUB_OUTPUT
-          echo LUA32_URL=${LUA32_URL} >> $GITHUB_OUTPUT
-          echo LUA64_URL=${LUA64_URL} >> $GITHUB_OUTPUT
-          echo SODIUM_MSVC_FILE=${SODIUM_MSVC_FILE}   >> $GITHUB_OUTPUT
-          echo SODIUM_MINGW_FILE=${SODIUM_MINGW_FILE} >> $GITHUB_OUTPUT
-          echo SODIUM_MSVC_URL=${SODIUM_MSVC_URL}   >> $GITHUB_OUTPUT
-          echo SODIUM_MINGW_URL=${SODIUM_MINGW_URL} >> $GITHUB_OUTPUT
+          LUA32_FILE="lua-${{ env.LUA_RELEASE }}_Win32_dllw6_lib.zip"
+          LUA64_FILE="lua-${{ env.LUA_RELEASE }}_Win64_dllw6_lib.zip"
+          LUA32_URL="${{ env.LUA_BINARIES_URL }}/${LUA32_FILE}"
+          LUA64_URL="${{ env.LUA_BINARIES_URL }}/${LUA64_FILE}"
+          SODIUM_MSVC_FILE="libsodium-${{ env.SODIUM_VER }}-stable-msvc.zip"
+          SODIUM_MINGW_FILE="libsodium-${{ env.SODIUM_VER }}-stable-mingw.tar.gz"
+          SODIUM_MSVC_URL="${{ env.SODIUM_RELEASE_URL }}/${SODIUM_MSVC_FILE}"
+          SODIUM_MINGW_URL="${{ env.SODIUM_RELEASE_URL }}/${SODIUM_MINGW_FILE}"
+          echo "LUA32_FILE=${LUA32_FILE}" >> $GITHUB_OUTPUT
+          echo "LUA64_FILE=${LUA64_FILE}" >> $GITHUB_OUTPUT
+          echo "LUA32_URL=${LUA32_URL}" >> $GITHUB_OUTPUT
+          echo "LUA64_URL=${LUA64_URL}" >> $GITHUB_OUTPUT
+          echo "SODIUM_MSVC_FILE=${SODIUM_MSVC_FILE}"   >> $GITHUB_OUTPUT
+          echo "SODIUM_MINGW_FILE=${SODIUM_MINGW_FILE}" >> $GITHUB_OUTPUT
+          echo "SODIUM_MSVC_URL=${SODIUM_MSVC_URL}"   >> $GITHUB_OUTPUT
+          echo "SODIUM_MINGW_URL=${SODIUM_MINGW_URL}" >> $GITHUB_OUTPUT
 
       - name: Create cache list
         shell: cmd
