@@ -413,6 +413,7 @@ jobs:
       - name: Create cache list
         shell: cmd
         run: |
+          if not exist downloads mkdir downloads
           type NUL > cachefiles.txt
           echo %LUA32_FILE% >> cachefiles.txt
           echo %LUA64_FILE% >> cachefiles.txt
@@ -420,12 +421,6 @@ jobs:
           echo %SODIUM_MSVC_FILE% >> cachefiles.txt
           echo %SODIUM_MINGW_FILE% >> cachefiles.txt
           type cachefiles.txt
-      - name: noop
-        shell: bash
-        run: |
-          cat cachefiles.txt
-          ls downloads
-          exit 1
 
       - name: Restore cache files
         uses: actions/cache/restore@v4
@@ -453,6 +448,13 @@ jobs:
             echo "cached=true" >> $GITHUB_OUTPUT
             echo "all files cached"
           fi
+      - name: noop
+        if: false
+        shell: bash
+        run: |
+          cat cachefiles.txt
+          ls downloads
+          exit 1
 
       - name: Download dependencies
         id: download
