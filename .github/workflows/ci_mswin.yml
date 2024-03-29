@@ -387,7 +387,7 @@ jobs:
           make ${TEST} # }}}
 
   windows-cache:
-    if: false #{{{
+    if: true #{{{
     runs-on: windows-2022
 
     env:
@@ -411,7 +411,7 @@ jobs:
       - name: Create cache list
         shell: cmd
         run: |
-          type NUL > urls.txt
+          type NUL > cachefiles.txt
           echo %LUA32_FILE% >> cachefiles.txt
           echo %LUA64_FILE% >> cachefiles.txt
           echo %WINPTY_FILE% >> cachefiles.txt
