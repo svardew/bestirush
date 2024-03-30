@@ -108,9 +108,14 @@ jobs:
           echo old-key-sum ${{ hashFiles('SHA256SUMS_old') }}
           gh extension install actions/gh-actions-cache
           xcache=${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
-          xcacheid=$(gh actions-cache list -R ${{ env.REPO }} | grep -F $xcache | cut -f1)
-          if [ -n "$cacheid" ]; then
-            gh actions-cache delete $xcache -R ${{ env.REPO }} --confirm
+          xcacheid=$(gh actions-cache list -R ${{ env.REPO }} \
+          | grep -F ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} \
+          | cut -f1)
+          echo '/* cache file exist?' $xcacheid '*/'
+          echo '/*' ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} '*/'
+          if [ -n "$xcacheid" ]; then
+            gh actions-cache delete \
+            ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} -R ${{ env.REPO }} --confirm
           # https://github.com/actions/gh-actions-cache/
           # https://cli.github.com/manual/gh_api
           #>>  gh api \
@@ -120,8 +125,14 @@ jobs:
           #>>    /repos/${{ github.OWNER }}/${{ github.REPO }}/actions/caches/$xcacheid
           fi
           xkeyfile=${{ runner.os }}-keyfile
-          if [ 0 -ne $(gh actions-cache list -R ${{ env.REPO }} | grep -c -F $xkeyfile) ]; then
-            gh actions-cache delete $xkeyfile -R ${{ env.REPO }} --confirm
+          xkeyfileid=$(gh actions-cache list -R ${{ env.REPO }} \
+          | grep -F ${{ runner.os }}-keyfile \
+          | cut -f1)
+          echo '// xkeyfile'
+          echo '//name: ' $xkeyfile
+          echo '//id: ' $xkeyfileid
+          if [ -n "$xkeyfileid" ]; then
+            gh actions-cache delete ${{ runner.os }}-keyfile -R ${{ env.REPO }} --confirm
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
