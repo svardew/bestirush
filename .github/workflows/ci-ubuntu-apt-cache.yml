@@ -94,8 +94,11 @@ jobs:
         if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
         run: |
           gh extension install actions/gh-actions-cache
-          gh actions-cache delete ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
-          gh actions-cache delete ${{ runner.os }}-keyfile
+          gh actions-cache delete ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} -R $REPO
+          gh actions-cache delete ${{ runner.os }}-keyfile -R $REPO
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
       - name: save cache
         if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
         uses: actions/cache/save@v4
