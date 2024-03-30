@@ -18,6 +18,8 @@ permissions:
 jobs:
   linux-cache:
     runs-on: ubuntu-22.04
+    permissions:
+      actions: write #docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
     env:
       DESC: cache debs without matrix
     steps:
