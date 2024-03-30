@@ -30,7 +30,7 @@ jobs:
           grep -Hn Cache /etc/apt/apt.conf.d/*
           sudo touch /etc/apt/apt.conf.d/99usearchives
           echo 'Binary::apt::APT::Cache "/var/cache/apt";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
-          echo 'Binary::apt::APT::Cache::Archives "archives";' >>  | sudo tee -a /etc/apt/apt.conf.d/99usearchives
+          echo 'Binary::apt::APT::Cache::Archives "archives";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
       - name: apt update
         run:  sudo apt-get update
       - name: apt upgrade
