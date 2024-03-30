@@ -30,6 +30,8 @@ jobs:
           echo 'Binary::apt::APT::Cache "/var/cache/apt";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
           echo 'Binary::apt::APT::Cache::Archives "archives";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
       #/// cache restore
+      - name: userhome apt-cachedir
+        run: test -d apt-cachedir || mkdir apt-cachedir
       - name: Resotre key file
         uses: actions/cache/restore@v4
         with:
@@ -87,14 +89,14 @@ jobs:
           sha256sum *.deb > ../SHA256SUMS
           cd ../
       - if: ${{ hashFiles('SHA256SUMS') == hashFiles('SHA256SUMS_old') }}
-        run: /bin/true
+        run: /bin/true # do nothing. repository cache is up to date.
       - name: delete key and cache
         if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
         run: |
           gh extension install actions/gh-actions-cache
           gh actions-cache delete ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
           gh actions-cache delete ${{ runner.os }}-keyfile
-      - name: override cache
+      - name: save cache
         if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
         uses: actions/cache/save@v4
         with:
