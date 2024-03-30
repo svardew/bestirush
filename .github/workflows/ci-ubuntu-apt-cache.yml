@@ -92,25 +92,41 @@ jobs:
         run: /bin/true # do nothing. repository cache is up to date.
       - name: delete key and cache
         if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
+        shell: bash {0}
         run: |
+          # docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
+          echo new-key-sum ${{ hashFiles('SHA256SUMS') }}
+          echo old-key-sum ${{ hashFiles('SHA256SUMS_old') }}
           gh extension install actions/gh-actions-cache
-          gh actions-cache delete ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} -R $REPO
-          gh actions-cache delete ${{ runner.os }}-keyfile -R $REPO
+          xcahce=${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
+          if [ 0 -ne $(gh actions-cache list -R $REPO | grep -c -F $xcache) ]; then
+            gh actions-cache delete ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} -R $REPO
+          fi
+          xkey=${{ runner.os }}-keyfile
+          if [ 0 -ne $(gh actions-cache list -R $REPO | grep -c -F $xkey ]; then
+            gh actions-cache delete ${{ runner.os }}-keyfile -R $REPO
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-      - name: save cache
+      - name: save new cache
         if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
         uses: actions/cache/save@v4
         with:
           path: apt-cachedir
           key: ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
       - name: override keyfile
         if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
         uses: actions/cache/save@v4
         with:
           path: SHA256SUMS
           key: ${{ runner.os }}-keyfile
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
       - name: greeting
         run: echo noop.
 
