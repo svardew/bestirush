@@ -107,10 +107,10 @@ jobs:
           echo new-key-sum ${{ hashFiles('SHA256SUMS') }}
           echo old-key-sum ${{ hashFiles('SHA256SUMS_old') }}
           gh extension install actions/gh-actions-cache
-          xcahce=${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
+          xcache=${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
           xcacheid=$(gh actions-cache list -R ${{ env.REPO }} | grep -F $xcache | cut -f1)
           if [ -n "$cacheid" ]; then
-          gh actions-cache delete $xcache -R ${{ env.REPO }} --confirm
+            gh actions-cache delete $xcache -R ${{ env.REPO }} --confirm
           # https://github.com/actions/gh-actions-cache/
           # https://cli.github.com/manual/gh_api
           #>>  gh api \
