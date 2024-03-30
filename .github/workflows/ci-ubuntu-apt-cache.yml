@@ -23,6 +23,11 @@ jobs:
     steps:
       - name: make cachedir
         run:  mkdir ./apt-cachedir
+      - name: Restore debfile cache
+        uses: actions/cache/restore@v4
+        with:
+          path: apt-cachedir
+          key: ${{ runner.os }}-debfiles
       - name: modify apt.conf
         shell: bash {0}
         run: |
@@ -86,7 +91,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: apt-cachedir
-          key: ${{ runner.os }}-debfiles-${{ hashFiles('_debfiles.txt') }}
+          key: ${{ runner.os }}-debfiles
       - name: greeting
         run: echo noop.
 
