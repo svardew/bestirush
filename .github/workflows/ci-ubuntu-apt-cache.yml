@@ -74,6 +74,19 @@ jobs:
         run: |
           ls -lah /var/cache/apt/archives/*.deb
           sudo du -sh /var/cache/apt/archives/
+      - name: Create cache list
+        run: |
+          touch _debfiles.txt
+          ls -1 /var/cache/apt/archives/*.deb > _debfiles.txt
+          cp -vn /var/cache/apt/archives/*.deb ./apt-cachedir/
+          echo 'cache size, cache files'
+          du -sh apt-cachedir
+          wc -l _debfiles.txt
+      - name: Save cache
+        uses: actions/cache/save@v4
+        with:
+          path: apt-cachedir
+          key: ${{ runner.os }}-debfiles-${{ hashFiles('_debfiles.txt') }}
       - name: greeting
         run: echo noop.
 
