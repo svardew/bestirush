@@ -108,9 +108,9 @@ jobs:
           echo old-key-sum ${{ hashFiles('SHA256SUMS_old') }}
           gh extension install actions/gh-actions-cache
           xcahce=${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
-          xcacheid=$(gh actions-cache list -R $REPO | grep -F $xcache | cut -d\  -f1)
+          xcacheid=$(gh actions-cache list -R ${{ env.REPO }} | grep -F $xcache | cut -f1)
           if [ -n "$cacheid" ]; then
-          gh actions-cache delete ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} -R $REPO --confirm
+          gh actions-cache delete $xcache -R ${{ env.REPO }} --confirm
           # https://github.com/actions/gh-actions-cache/
           # https://cli.github.com/manual/gh_api
           #>>  gh api \
@@ -119,9 +119,9 @@ jobs:
           #>>    -H "X-GitHub-Api-Version: 2022-11-28" \
           #>>    /repos/${{ github.OWNER }}/${{ github.REPO }}/actions/caches/$xcacheid
           fi
-          xkey=${{ runner.os }}-keyfile
-          if [ 0 -ne $(gh actions-cache list -R $REPO | grep -c -F $xkey) ]; then
-            gh actions-cache delete ${{ runner.os }}-keyfile -R $REPO --confirm
+          xkeyfile=${{ runner.os }}-keyfile
+          if [ 0 -ne $(gh actions-cache list -R ${{ env.REPO }} | grep -c -F $xkeyfile) ]; then
+            gh actions-cache delete $xkeyfile -R ${{ env.REPO }} --confirm
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
