@@ -42,8 +42,8 @@ jobs:
           key: ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }}
       - name: backup key file
         run: |
-        touch SHA256SSUMS
-        mv SHA256SSUMS SHA256SUMS_old
+          touch SHA256SSUMS
+          mv SHA256SSUMS SHA256SUMS_old
       #/// apt upgrade
       - name: apt upgrade
         run: |
