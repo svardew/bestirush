@@ -30,22 +30,26 @@ jobs:
           echo 'Binary::apt::APT::Cache "/var/cache/apt";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
           echo 'Binary::apt::APT::Cache::Archives "archives";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
       #/// cache restore
-      - name: userhome apt-cachedir
+      - name: mkdir userhome apt-cachedir
         run: test -d apt-cachedir || mkdir apt-cachedir
-      - name: Resotre key file
+      - name: Resotre key file (SHA256SUMS)
         uses: actions/cache/restore@v4
         with:
           path: .
           key: ${{ runner.os }}-keyfile
-      - name: Restore cache into system cachedir
+      - name: backup key file
+        shell: bash {0}
+        run: |
+          touch SHA256SSUMS
+          cat SHA256SSUMS | sort > SHA256SUMS_old
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: apt-cachedir
           key: ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }}
-      - name: backup key file
+      - name: copy deb into system cachedir
         run: |
-          touch SHA256SSUMS
-          mv SHA256SSUMS SHA256SUMS_old
+          sudo cp -n ./apt-cachedir/*.deb /var/cache/apt/archives/
       #/// apt upgrade
       - name: apt upgrade
         run: |
@@ -83,13 +87,17 @@ jobs:
           sudo apt-get install -y "${PKGS[@]}"
       # compare cache
       - name: check latest cache
+        shell: bash {0}
         run: |
-          cp -vn /var/cache/apt/archives/*.deb ./apt-cachedir/
+          cp -n /var/cache/apt/archives/*.deb ./apt-cachedir/
           cd apt-cachedir
-          sha256sum *.deb > ../SHA256SUMS
+          sha256sum *.deb | sort > ../SHA256SUMS
           cd ../
       - if: ${{ hashFiles('SHA256SUMS') == hashFiles('SHA256SUMS_old') }}
-        run: /bin/true # do nothing. repository cache is up to date.
+        run: |
+          echo '/* SHA256SUMS is same, keep Repository cache */'
+          echo new-key-sum ${{ hashFiles('SHA256SUMS') }}
+          echo old-key-sum ${{ hashFiles('SHA256SUMS_old') }}
       - name: delete key and cache
         if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
         shell: bash {0}
