@@ -29,34 +29,25 @@ jobs:
           sudo touch /etc/apt/apt.conf.d/99usearchives
           echo 'Binary::apt::APT::Cache "/var/cache/apt";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
           echo 'Binary::apt::APT::Cache::Archives "archives";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
-      - name: make cachedir
-        run:  mkdir ./apt-cachedir
-      - name: Restore debfile cache local
+      #/// cache restore
+      - name: Resotre key file
+        uses: actions/cache/restore@v4
+        with:
+          path: .
+          key: ${{ runner.os }}-keyfile
+      - name: Restore cache into system cachedir
         uses: actions/cache/restore@v4
         with:
           path: apt-cachedir
-          key: ${{ runner.os }}-debfiles
-      - name: check restored cachedir
-        run:  |
-          echo 'file size, file nums'
-          ls -lah apt-cachedir
-      - name: check system apt cache
-        run: |
-          echo 'files in /var/cache/apt/archives'
-          ls -lah /var/cache/apt/archives/*.deb
-      - name: Restore debfile cache system
-        run: |
-          sudo cp -vn apt-cachedir/*.deb /var/cache/apt/archives/
-          ls -lah /var/cache/apt/archives/*.deb
-      - name: apt update
-        run:  sudo apt-get update
+          key: ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }}
+      - name: backup key file
+        run: mv SHA256SSUMS SHA256SUMS_old
+      #/// apt upgrade
       - name: apt upgrade
-        run:  sudo apt-get upgrade -y
-      - name: files in /var/cache/apt/archives
         run: |
-          ls -lah /var/cache/apt/archives/*.deb
-          sudo du -sh /var/cache/apt/archives/
-      - name: Install packages, without matrix related
+          sudo apt-get update
+          sudo apt-get upgrade -y
+      - name: install packages
         run: |
           PKGS=( \
             gettext \
@@ -85,25 +76,34 @@ jobs:
             attr \
             libattr1-dev
           )
-          # sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y "${PKGS[@]}"
           sudo apt-get install -y "${PKGS[@]}"
-      - name: files in /var/cache/apt/archives
+      # compare cache
+      - name: check latest cache
         run: |
-          ls -lah /var/cache/apt/archives/*.deb
-          sudo du -sh /var/cache/apt/archives/
-      - name: Create cache list
-        run: |
-          touch _debfiles.txt
-          ls -1 /var/cache/apt/archives/*.deb > _debfiles.txt
           cp -vn /var/cache/apt/archives/*.deb ./apt-cachedir/
-          echo 'cache size, cache files'
-          du -sh apt-cachedir
-          wc -l _debfiles.txt
-      - name: Save cache
+          cd apt-cachedir
+          sha256sum *.deb > ../SHA256SUMS
+          cd ../
+      - if: ${{ hashFiles('SHA256SUMS') == hashFiles('SHA256SUMS_old') }}
+        run: /bin/true
+      - name: delete key and cache
+        if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
+        run: |
+          gh extension install actions/gh-actions-cache
+          gh actions-cache delete ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
+          gh actions-cache delete ${{ runner.os }}-keyfile
+      - name: override cache
+        if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
         uses: actions/cache/save@v4
         with:
           path: apt-cachedir
-          key: ${{ runner.os }}-debfiles
+          key: ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }}
+      - name: override keyfile
+        if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
+        uses: actions/cache/save@v4
+        with:
+          path: SHA256SUMS
+          key: ${{ runner.os }}-keyfile
       - name: greeting
         run: echo noop.
 
