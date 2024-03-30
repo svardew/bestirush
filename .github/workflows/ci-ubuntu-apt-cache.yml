@@ -95,6 +95,7 @@ jobs:
         shell: bash {0}
         run: |
           # docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
+          echo '/* SHA256SUMS not equal. update Repository cache */'
           echo new-key-sum ${{ hashFiles('SHA256SUMS') }}
           echo old-key-sum ${{ hashFiles('SHA256SUMS_old') }}
           gh extension install actions/gh-actions-cache
@@ -103,7 +104,7 @@ jobs:
             gh actions-cache delete ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} -R $REPO
           fi
           xkey=${{ runner.os }}-keyfile
-          if [ 0 -ne $(gh actions-cache list -R $REPO | grep -c -F $xkey ]; then
+          if [ 0 -ne $(gh actions-cache list -R $REPO | grep -c -F $xkey) ]; then
             gh actions-cache delete ${{ runner.os }}-keyfile -R $REPO
           fi
         env:
