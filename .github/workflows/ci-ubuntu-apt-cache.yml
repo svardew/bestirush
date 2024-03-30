@@ -21,21 +21,33 @@ jobs:
     env:
       DESC: cache debs without matrix
     steps:
+      - name: modify apt.conf
+        shell: bash {0}
+        run: |
+          # ls -lah /var/cache/apt/archives
+          # grep -Hn Cache /etc/apt/apt.conf.d/*
+          sudo touch /etc/apt/apt.conf.d/99usearchives
+          echo 'Binary::apt::APT::Cache "/var/cache/apt";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
+          echo 'Binary::apt::APT::Cache::Archives "archives";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
       - name: make cachedir
         run:  mkdir ./apt-cachedir
-      - name: Restore debfile cache
+      - name: Restore debfile cache local
         uses: actions/cache/restore@v4
         with:
           path: apt-cachedir
           key: ${{ runner.os }}-debfiles
-      - name: modify apt.conf
-        shell: bash {0}
+      - name: check restored cachedir
+        run:  |
+          echo 'file size, file nums'
+          ls -lah apt-cachedir
+      - name: check system apt cache
         run: |
-          ls -lah /var/cache/apt/archives
-          grep -Hn Cache /etc/apt/apt.conf.d/*
-          sudo touch /etc/apt/apt.conf.d/99usearchives
-          echo 'Binary::apt::APT::Cache "/var/cache/apt";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
-          echo 'Binary::apt::APT::Cache::Archives "archives";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
+          echo 'files in /var/cache/apt/archives'
+          ls -lah /var/cache/apt/archives/*.deb
+      - name: Restore debfile cache system
+        run: |
+          sudo cp -vn apt-cachedir/*.deb /var/cache/apt/archives/
+          ls -lah /var/cache/apt/archives/*.deb
       - name: apt update
         run:  sudo apt-get update
       - name: apt upgrade
