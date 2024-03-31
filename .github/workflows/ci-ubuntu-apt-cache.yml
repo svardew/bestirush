@@ -43,8 +43,8 @@ jobs:
       - name: backup key file
         shell: bash {0}
         run: |
-          touch SHA256SSUMS
-          cat SHA256SSUMS | sort > SHA256SUMS_old
+          touch SHA256SUMS
+          cat SHA256SUMS | sort > SHA256SUMS_old
       - name: Restore cache
         uses: actions/cache/restore@v4
         with:
