@@ -33,23 +33,28 @@ jobs:
           echo 'Binary::apt::APT::Cache "/var/cache/apt";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
           echo 'Binary::apt::APT::Cache::Archives "archives";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
       #/// cache restore
-      - name: mkdir userhome apt-cachedir
-        run: test -d apt-cachedir || mkdir apt-cachedir
+      - name: mkdir userhome apt-cachedir, keyfile-dir
+        run:
+          test -d apt-cachedir || mkdir apt-cachedir
+          test -d keyfile-dir || mkdir keyfile-dir
       - name: Resotre key file (SHA256SUMS)
         uses: actions/cache/restore@v4
         with:
-          path: .
+          path: keyfile-dir
           key: ${{ runner.os }}-keyfile
       - name: backup key file
         shell: bash {0}
         run: |
+          cd keyfile-dir
+          ls -1
+          echo 'touch and backup SHA256SUMS'
           touch SHA256SUMS
           cat SHA256SUMS | sort > SHA256SUMS_old
       - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: apt-cachedir
-          key: ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }}
+          key: ${{ runner.os }}-debfiles-${{ hashFiles('keyfile-dir/SHA256SUMS') }}
       - name: copy deb into system cachedir
         continue-on-error: true # in case no deb files
         run: |
@@ -90,48 +95,49 @@ jobs:
           )
           sudo apt-get install --download-only -y "${PKGS[@]}"
       # compare cache
-      - name: check latest cache
+      - name: copy deb files
         shell: bash {0}
         run: |
           cp -n /var/cache/apt/archives/*.deb ./apt-cachedir/
           cd apt-cachedir
-          sha256sum *.deb | sort > ../SHA256SUMS
+          sha256sum *.deb | sort > ../keyfile-dir/SHA256SUMS
           cd ../
-      - if: ${{ hashFiles('SHA256SUMS') == hashFiles('SHA256SUMS_old') }}
+          md5sum keyfile-dir/*
+      - if: ${{ hashFiles('keyfile-dir/SHA256SUMS') == hashFiles('keyfile-dir/SHA256SUMS_old') }}
         run: |
           echo '/* SHA256SUMS is same, keep Repository cache */'
-          echo new-key-sum ${{ hashFiles('SHA256SUMS') }}
-          echo old-key-sum ${{ hashFiles('SHA256SUMS_old') }}
+          echo new-key-sum ${{ hashFiles('keyfile-dir/SHA256SUMS') }}
+          echo old-key-sum ${{ hashFiles('keyfile-dir/SHA256SUMS_old') }}
       - name: delete key and cache
-        if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
+        if: ${{ hashFiles('keyfile-dir/SHA256SUMS') != hashFiles('keyfile-dir/SHA256SUMS_old') }}
         shell: bash {0}
         run: |
           # docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
           echo '/* SHA256SUMS not equal. update Repository cache */'
           echo ' * remove old-cache, new-cache, key-cache'
           echo ' */'
-          echo new-key-sum ${{ hashFiles('SHA256SUMS') }}
-          echo old-key-sum ${{ hashFiles('SHA256SUMS_old') }}
+          echo new-key-sum ${{ hashFiles('keyfile-dir/SHA256SUMS') }}
+          echo old-key-sum ${{ hashFiles('keyfile-dir/SHA256SUMS_old') }}
           gh extension install actions/gh-actions-cache
-          xold=${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
+          xold=${{ runner.os }}-debfiles-${{ hashFiles('keyfile-dir/SHA256SUMS_old') }}
           xoldid=$(gh actions-cache list -R ${{ env.REPO }} |
-            grep -F ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} |
+            grep -F ${{ runner.os }}-debfiles-${{ hashFiles('keyfile-dir/SHA256SUMS_old') }} |
             cut -f1
           )
           echo '/* old-cache exist? :' $xoldid '*/'
           if [ -n "$xoldid" ]; then
             gh actions-cache delete \
-            ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} -R ${{ env.REPO }} --confirm
+            ${{ runner.os }}-debfiles-${{ hashFiles('keyfile-dir/SHA256SUMS_old') }} -R ${{ env.REPO }} --confirm
           fi
-          xnew=${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }}
+          xnew=${{ runner.os }}-debfiles-${{ hashFiles('keyfile-dir/SHA256SUMS') }}
           xnewid=$(gh actions-cache list -R ${{ env.REPO }} |
-            grep -F ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }} |
+            grep -F ${{ runner.os }}-debfiles-${{ hashFiles('keyfile-dir/SHA256SUMS') }} |
             cut -f1
           )
           echo '/* new-cache exist? :' $xnewid '*/'
           if [ -n "$xnewid" ]; then
             gh actions-cache delete \
-            ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }} -R ${{ env.REPO }} --confirm
+            ${{ runner.os }}-debfiles-${{ hashFiles('keyfile-dir/SHA256SUMS') }} -R ${{ env.REPO }} --confirm
           fi
           xkey=${{ runner.os }}-keyfile
           xkeyid=$(gh actions-cache list -R ${{ env.REPO }} |
@@ -146,16 +152,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
       - name: save new cache
-        if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
+        if: ${{ hashFiles('keyfile-dir/SHA256SUMS') != hashFiles('keyfile-dir/SHA256SUMS_old') }}
         uses: actions/cache/save@v4
         with:
           path: apt-cachedir
-          key: ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }}
+          key: ${{ runner.os }}-debfiles-${{ hashFiles('keyfile-dir/SHA256SUMS') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
       - name: override keyfile
-        if: ${{ hashFiles('SHA256SUMS') != hashFiles('SHA256SUMS_old') }}
+        if: ${{ hashFiles('keyfile-dir/SHA256SUMS') != hashFiles('keyfile-dir/SHA256SUMS_old') }}
         uses: actions/cache/save@v4
         with:
           path: SHA256SUMS
