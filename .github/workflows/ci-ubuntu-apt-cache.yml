@@ -164,7 +164,7 @@ jobs:
         if: ${{ hashFiles('keyfile-dir/SHA256SUMS') != hashFiles('keyfile-dir/SHA256SUMS_old') }}
         uses: actions/cache/save@v4
         with:
-          path: SHA256SUMS
+          path: keyfile-dir
           key: ${{ runner.os }}-keyfile
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
