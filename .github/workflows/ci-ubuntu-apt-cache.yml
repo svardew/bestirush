@@ -51,14 +51,15 @@ jobs:
           path: apt-cachedir
           key: ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }}
       - name: copy deb into system cachedir
+        continue-on-error: true # in case no deb files
         run: |
           sudo cp -n ./apt-cachedir/*.deb /var/cache/apt/archives/
       #/// apt upgrade
-      - name: apt upgrade
+      - name: apt upgrade (not install)
         run: |
           sudo apt-get update
-          sudo apt-get upgrade -y
-      - name: install packages
+          sudo apt-get upgrade --download-only -y
+      - name: fetch packages (not install)
         run: |
           PKGS=( \
             gettext \
@@ -87,7 +88,7 @@ jobs:
             attr \
             libattr1-dev
           )
-          sudo apt-get install -y "${PKGS[@]}"
+          sudo apt-get install --download-only -y "${PKGS[@]}"
       # compare cache
       - name: check latest cache
         shell: bash {0}
