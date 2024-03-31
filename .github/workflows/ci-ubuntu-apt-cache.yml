@@ -34,7 +34,7 @@ jobs:
           echo 'Binary::apt::APT::Cache::Archives "archives";' | sudo tee -a /etc/apt/apt.conf.d/99usearchives
       #/// cache restore
       - name: mkdir userhome apt-cachedir, keyfile-dir
-        run:
+        run: |
           test -d apt-cachedir || mkdir apt-cachedir
           test -d keyfile-dir || mkdir keyfile-dir
       - name: Resotre key file (SHA256SUMS)
