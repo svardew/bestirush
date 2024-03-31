@@ -107,34 +107,38 @@ jobs:
         run: |
           # docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
           echo '/* SHA256SUMS not equal. update Repository cache */'
+          echo ' * remove old-cache, new-cache, key-cache'
+          echo ' */'
           echo new-key-sum ${{ hashFiles('SHA256SUMS') }}
           echo old-key-sum ${{ hashFiles('SHA256SUMS_old') }}
           gh extension install actions/gh-actions-cache
-          xcache=${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
-          xcacheid=$(gh actions-cache list -R ${{ env.REPO }} \
-          | grep -F ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} \
-          | cut -f1)
-          echo '/* cache file exist?' $xcacheid '*/'
-          echo '/*' ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} '*/'
-          if [ -n "$xcacheid" ]; then
+          xold=${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }}
+          xoldid=$(gh actions-cache list -R ${{ env.REPO }} |
+            grep -F ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} |
+            cut -f1
+          )
+          echo '/* old-cache exist? :' $xoldid '*/'
+          if [ -n "$xoldid" ]; then
             gh actions-cache delete \
             ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS_old') }} -R ${{ env.REPO }} --confirm
-          # https://github.com/actions/gh-actions-cache/
-          # https://cli.github.com/manual/gh_api
-          #>>  gh api \
-          #>>    --method DELETE \
-          #>>    -H "Accept: application/vnd.github+json" \
-          #>>    -H "X-GitHub-Api-Version: 2022-11-28" \
-          #>>    /repos/${{ github.OWNER }}/${{ github.REPO }}/actions/caches/$xcacheid
           fi
-          xkeyfile=${{ runner.os }}-keyfile
-          xkeyfileid=$(gh actions-cache list -R ${{ env.REPO }} \
-          | grep -F ${{ runner.os }}-keyfile \
-          | cut -f1)
-          echo '// xkeyfile'
-          echo '//name: ' $xkeyfile
-          echo '//id: ' $xkeyfileid
-          if [ -n "$xkeyfileid" ]; then
+          xnew=${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }}
+          xnewid=$(gh actions-cache list -R ${{ env.REPO }} |
+            grep -F ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }} |
+            cut -f1
+          )
+          echo '/* new-cache exist? :' $xnewid '*/'
+          if [ -n "$xnewid" ]; then
+            gh actions-cache delete \
+            ${{ runner.os }}-debfiles-${{ hashFiles('SHA256SUMS') }} -R ${{ env.REPO }} --confirm
+          fi
+          xkey=${{ runner.os }}-keyfile
+          xkeyid=$(gh actions-cache list -R ${{ env.REPO }} |
+            grep -F ${{ runner.os }}-keyfile |
+            cut -f1
+          )
+          echo '/* key-cache exist? :' $xkeyid '*/'
+          if [ -n "$xkeyid" ]; then
             gh actions-cache delete ${{ runner.os }}-keyfile -R ${{ env.REPO }} --confirm
           fi
         env:
