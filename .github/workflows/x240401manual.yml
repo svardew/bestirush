@@ -46,7 +46,7 @@ jobs:
     - name: edit list
       shell: pwsh
       run: |
-        echo NUL > urls.txt
+        type NUL > urls.txt
         echo 5.2 >> urls.txt
         echo https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip >> urls.txt
         echo '1.0.232' >> urls.txt
