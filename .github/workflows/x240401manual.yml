@@ -12,14 +12,12 @@ env:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  env:
-    GH_TOKEN: ${{ secrets.github_token }}
-    REPO: ${{ github.repository }}
-
   hashfiles-ubu:
     runs-on: ubuntu-latest
     env:
       MEMO: noop
+      GH_TOKEN: ${{ secrets.github_token }}
+      REPO: ${{ github.repository }}
     steps:
     - name: edit list
       # shell: bash (default)
@@ -36,6 +34,8 @@ jobs:
     runs-on: windows-latest
     env:
       MEMO: void
+      GH_TOKEN: ${{ secrets.github_token }}
+      REPO: ${{ github.repository }}
     steps:
     - name: edit list
       # shell: pwsh (default)
