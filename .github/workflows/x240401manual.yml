@@ -6,36 +6,45 @@ name: Manual workflow
 # or API.
 on:
   workflow_dispatch:
+env:
+  LUA_VER: 5.2
+  LUA32_URL: https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip >> urls.txt
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "greet"
+  env:
+    GH_TOKEN: ${{ secrets.github_token }}
+    REPO: ${{ github.repository }}
+
   hashfiles-ubu:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
     env:
-      LUA_VER: 5.4
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+      MEMO: noop
     steps:
-    # Runs a single command using the runners shell
     - name: edit list
+      # shell: bash (default)
       run: |
         touch urls.txt
-        echo 5.2.55 >> urls.txt
-        echo https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua.zip >> urls.txt
+        echo 5.2 >> urls.txt
+        echo ${{ env.LUA32_URL }} >> urls.txt
         echo '1.0.232' >> urls.txt
         cat urls.txt
+    - name: check hashFiles value
+      run: echo ${{ hashFiles('urls.txt') }}
+
   hashfiles-win:
     runs-on: windows-latest
     env:
-      LUA_VER: 5.4
+      MEMO: void
     steps:
     - name: edit list
+      # shell: pwsh (default)
       run: |
-        echo NUL > urls.txt
-        echo 5.2.55>> urls.txt
-        echo https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua.zip >> urls.txt
+        touch urls.txt
+        echo 5.2 >> urls.txt
+        echo ${{ env.LUA32_URL }} >> urls.txt
         echo '1.0.232' >> urls.txt
         type urls.txt
-    
+    - name: check hashFiles value
+      run: echo ${{ hashFiles('urls.txt') }}
+
