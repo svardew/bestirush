@@ -57,7 +57,7 @@ jobs:
       - id: url
         name: set download url
         run: |
-          url=https://github.com/rprichard/winpty/releases/download/
+          url=https://github.com/rprichard/winpty/releases/download
           url=$url/${{ env.WINPTY_VER }}/${{ steps.fn.outputs.WINPTY }}
           echo "WINPTY=$url" >> $GITHUB_OUTPUT
           url=https://downloads.sourceforge.net/luabinaries
