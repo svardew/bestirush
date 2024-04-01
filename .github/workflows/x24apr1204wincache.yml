@@ -42,37 +42,43 @@ jobs:
 
     steps:
       - id: fn
+        name: set filename
         run: |
           f=winpty-${{ env.WINPTY_VER }}-msvc2015.zip
-          echo "WINPTY=$f"
+          echo "WINPTY=$f" >> $GITHUB_OUTPUT
           f=lua-${{ env.LUA_RELEASE }}_Win32_dllw6_lib.zip
-          echo "LUA32=$f"
+          echo "LUA32=$f" >> $GITHUB_OUTPUT
           f=lua-${{ env.LUA_RELEASE }}_Win64_dllw6_lib.zip
-          echo "LUA64=$f"
+          echo "LUA64=$f" >> $GITHUB_OUTPUT
           f=libsodium-${{ env.SODIUM_VER }}-stable-msvc.zip
-          echo "SODIUM_MSVC=$f"
+          echo "SODIUM_MSVC=$f" >> $GITHUB_OUTPUT
           f=libsodium-${{ env.SODIUM_VER }}-stable-mingw.tar.gz
-          echo "SODIUM_MINGW=$f"
+          echo "SODIUM_MINGW=$f" >> $GITHUB_OUTPUT
       - id: url
+        name: set download url
         run: |
           url=https://github.com/rprichard/winpty/releases/download/
           url=$url/${{ env.WINPTY_VER }}/${{ steps.fn.outputs.WINPTY }}
-          echo "WINPTY=$url"
+          echo "WINPTY=$url" >> $GITHUB_OUTPUT
           url=https://downloads.sourceforge.net/luabinaries
           url=$url/${{ steps.fn.outputs.LUA32 }}
-          echo "LUA32=$url"
+          echo "LUA32=$url" >> $GITHUB_OUTPUT
           url=https://downloads.sourceforge.net/luabinaries
           url=$url/${{ steps.fn.outputs.LUA64 }}
-          echo "LUA64=$url"
+          echo "LUA64=$url" >> $GITHUB_OUTPUT
           url=https://download.libsodium.org/libsodium/releases
           url=$url/${{ steps.fn.outputs.SODIUM_MSVC }}
-          echo "SODIUM_MSVC=$url"
+          echo "SODIUM_MSVC=$url" >> $GITHUB_OUTPUT
           url=https://download.libsodium.org/libsodium/releases
           url=$url/${{ steps.fn.outputs.SODIUM_MINGW }}
-          echo "SODIUM_MINGW=$url"
+          echo "SODIUM_MINGW=$url" >> $GITHUB_OUTPUT
 
-      - name: show env
-        run: env
+      - name: show outputs
+        run: |
+          echo '/* filenames */'
+          echo ${{ join(steps.fn.outputs.*, "\n") }}
+          echo '/* urls */'
+          echo ${{ join(steps.url.outputs.*, "\n") }}
 
       - name: urls.txt file, cache dirs, gh-action-cache command
         run: |
@@ -110,7 +116,7 @@ jobs:
             # dltwice <fname> <url>
             if [ ! -f $1 ]; then wget -O $1 $2 ;fi
             if [ ! -f $1 ]; then wget -O $1 $2 ;fi
-            if [ -s $1 ]; then rm $1 ;fi
+            if [ ! -s $1 ]; then rm $1 ;fi
           }
           dltwice lua.zip ${{ steps.url.outputs.LUA32 }}
           dltwice ${{ env.WINPTY_FILE }} ${{ steps.url.outputs.WINPTY }}
