@@ -41,26 +41,35 @@ jobs:
       REPO: ${{ github.repository }}
 
     steps:
-      - name: set env
+      - id: fn
         run: |
-          echo "WINPTY_FILE=winpty-0.4.3-msvc2015.zip" >> $GITHUB_ENV
-          echo "WINPTY_URL=${{ env.WINPTY_DL_URL }}/${{ env.WINPTY_VER }}/${{ env.WINPTY_FILE }}" >> $GITHUB_ENV
-          f_lua32=lua-${{ env.LUA_RELEASE }}_Win32_dllw6_lib.zip
-          f_lua64=lua-${{ env.LUA_RELEASE }}_Win64_dllw6_lib.zip
-          u_lua32=${{ env.LUA_DL_URL }}/$f_lua32
-          u_lua64=${{ env.LUA_DL_URL }}/$f_lua64
-          echo "LUA32_FILE=$f_lua32" >> $GITHUB_ENV
-          echo "LUA64_FILE=$f_lua64" >> $GITHUB_ENV
-          echo "LUA32_URL=$u_lua32" >> $GITHUB_ENV
-          echo "LUA64_URL=$u_lua64" >> $GITHUB_ENV
-          f_sodium_msvc=libsodium-${{ env.SODIUM_VER }}-stable-msvc.zip
-          f_sodium_mingw=libsodium-${{ env.SODIUM_VER }}-stable-mingw.tar.gz
-          u_sodium_msvc=${{ env.SODIUM_DL_URL }}/$f_sodium_msvc
-          u_sodium_mingw=${{ env.SODIUM_DL_URL }}/$f_sodium_mingw
-          echo "SODIUM_MSVC_FILE=$f_sodium_msvc" >> $GITHUB_ENV
-          echo "SODIUM_MSVC_URL=$u_sodium_msvc" >> $GITHUB_ENV
-          echo "SODIUM_MINGW_FILE=$f_sodium_mingw" >> $GITHUB_ENV
-          echo "SODIUM_MINGW_URL=$u_sodium_mingw" >> $GITHUB_ENV
+          f=winpty-${{ env.WINPTY_VER }}-msvc2015.zip
+          echo "WINPTY=$f"
+          f=lua-${{ env.LUA_RELEASE }}_Win32_dllw6_lib.zip
+          echo "LUA32=$f"
+          f=lua-${{ env.LUA_RELEASE }}_Win64_dllw6_lib.zip
+          echo "LUA64=$f"
+          f=libsodium-${{ env.SODIUM_VER }}-stable-msvc.zip
+          echo "SODIUM_MSVC=$f"
+          f=libsodium-${{ env.SODIUM_VER }}-stable-mingw.tar.gz
+          echo "SODIUM_MINGW=$f"
+      - id: url
+        run: |
+          url=https://github.com/rprichard/winpty/releases/download/
+          url=$url/${{ env.WINPTY_VER }}/${{ steps.fn.outputs.WINPTY }}
+          echo "WINPTY=$url"
+          url=https://downloads.sourceforge.net/luabinaries
+          url=$url/${{ steps.fn.outputs.LUA32 }}
+          echo "LUA32=$url"
+          url=https://downloads.sourceforge.net/luabinaries
+          url=$url/${{ steps.fn.outputs.LUA64 }}
+          echo "LUA64=$url"
+          url=https://download.libsodium.org/libsodium/releases
+          url=$url/${{ steps.fn.outputs.SODIUM_MSVC }}
+          echo "SODIUM_MSVC=$url"
+          url=https://download.libsodium.org/libsodium/releases
+          url=$url/${{ steps.fn.outputs.SODIUM_MINGW }}
+          echo "SODIUM_MINGW=$url"
 
       - name: show env
         run: env
@@ -69,7 +78,7 @@ jobs:
         run: |
           touch urls.txt
           echo ${{ env.LUA_RELEASE }} >> urls.txt
-          echo ${{ env.WINPTY_URL }} >> urls.txt
+          echo ${{ steps.url.outputs.WINPTY }} >> urls.txt
           echo ${{ env.SODIUM_VER }} >> urls.txt
           # For Windows, convert LF to CRLF (sed), and check (file)'
           sed -i 's/$/\r/g' urls.txt
@@ -95,35 +104,38 @@ jobs:
       - name: download (x86)
         shell: bash {0}
         run: |
-          dltwice () {
+          cd cache-x86
+          md5sum * | sort > ../MD5SUMS_x86_a
+          function dltwice {
             # dltwice <fname> <url>
             if [ ! -f $1 ]; then wget -O $1 $2 ;fi
             if [ ! -f $1 ]; then wget -O $1 $2 ;fi
             if [ -s $1 ]; then rm $1 ;fi
           }
-          cd cache-x86
-          md5sum * | sort > ../MD5SUMS_x86_a
-          dltwice lua.zip ${{ env.LUA32_URL }}
-          dltwice ${{ env.WINPTY_FILE }} ${{ env.WINPTY_URL }}
-          dltwice libsodium.zip ${{ env.SODIUM_MSVC_URL }}
-          dltwice libsodium.tar.gz ${{ env.SODIUM_MINGW_URL }}
+          dltwice lua.zip ${{ steps.url.outputs.LUA32 }}
+          dltwice ${{ env.WINPTY_FILE }} ${{ steps.url.outputs.WINPTY }}
+          dltwice libsodium.zip ${{ steps.url.outputs.SODIUM_MSVC }}
+          dltwice libsodium.tar.gz ${{ steps.url.outputs.SODIUM_MINGW }}
           md5sum * | sort > ../MD5SUMS_x86_b
+          cd ../
 
       - name: download (x64)
         shell: bash {0}
         run: |
-          dltwice () {
+          cd cache-x64
+          md5sum * | sort > ../MD5SUMS_x64_a
+          function dltwice {
             # dltwice <fname> <url>
             if [ ! -f $1 ]; then wget -O $1 $2 ;fi
             if [ ! -f $1 ]; then wget -O $1 $2 ;fi
+            if [ -s $1 ]; then rm $1 ;fi
           }
-          cd cache-x64
-          md5sum * | sort > ../MD5SUMS_x64_a
-          dltwice lua.zip ${{ env.LUA64_URL }}
-          dltwice ${{ env.WINPTY_FILE }} ${{ env.WINPTY_URL }}
-          dltwice libsodium.zip ${{ env.SODIUM_MSVC_URL }}
-          dltwice libsodium.tar.gz ${{ env.SODIUM_MINGW_URL }}
+          dltwice lua.zip ${{ steps.url.outputs.LUA64 }}
+          dltwice ${{ env.WINPTY_FILE }} ${{ steps.url.outputs.WINPTY }}
+          dltwice libsodium.zip ${{ steps.url.outputs.SODIUM_MSVC }}
+          dltwice libsodium.tar.gz ${{ steps.url.outputs.SODIUM_MINGW }}
           md5sum * | sort > ../MD5SUMS_x64_b
+          cd ../
 
       - name: keep cache (x86)
         if: ${{ hashFiles('MD5SUMS_x86_a') == hashFiles('MD5SUMS_x86_b') }}
@@ -156,7 +168,7 @@ jobs:
           key: Windows-x86-${{ hashFiles('urls.txt') }}
 
       - name: keep cache (x64)
-        if: ${{ hashFiles('MD5SUMS_x86_a') == hashFiles('MD5SUMS_x86_b') }}
+        if: ${{ hashFiles('MD5SUMS_x64_a') == hashFiles('MD5SUMS_x64_b') }}
         run: echo 'Repository cache for Windwos-x64 is up to date.'
 
       - name: delete cache (x64)
@@ -188,9 +200,9 @@ jobs:
       - name: report cache
         shell: bash {0}
         run: |
-          echo '--- current windows dependencies cache ---'
+          echo '--- current windows cache in repository ---'
           gh actions-cache list -R ${{ env.REPO }} | grep -F Windows-x
-          echo '--- windows-x64 cache files ---'
+          echo '--- files in x64 windows cache ---'
           cat MD5SUMS_x64_b
-          echo '--- windows-x86 cache files ---'
+          echo '--- files in x86 windows cache ---'
           cat MD5SUMS_x86_b
