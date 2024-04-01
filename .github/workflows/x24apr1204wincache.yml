@@ -45,16 +45,25 @@ jobs:
         run: |
           echo "WINPTY_FILE=winpty-0.4.3-msvc2015.zip" >> $GITHUB_ENV
           echo "WINPTY_URL=${{ env.WINPTY_DL_URL }}/${{ env.WINPTY_VER }}/${{ env.WINPTY_FILE }}" >> $GITHUB_ENV
-          echo "LUA32_FILE=lua-${{ env.LUA_RELEASE }}_Win32_dllw6_lib.zip" >> $GITHUB_ENV
-          echo "LUA64_FILE=lua-${{ env.LUA_RELEASE }}_Win64_dllw6_lib.zip" >> $GITHUB_ENV
-          echo "LUA32_URL=${{ env.LUA_DL_URL }}/${{ env.LUA32_FILE }}" >> $GITHUB_ENV
-          echo "LUA64_URL=${{ env.LUA_DL_URL }}/${{ env.LUA64_FILE }}" >> $GITHUB_ENV
-          sodium_msvc=libsodium-${{ env.SODIUM_VER }}-stable-msvc.zip
-          echo "SODIUM_MSVC_FILE=libsodium-${{ env.SODIUM_VER }}-stable-msvc.zip" >> $GITHUB_ENV
-          echo "SODIUM_MSVC_URL=${{ env.SODIUM_DL_URL }}/${sodium_msvc}" >> $GITHUB_ENV
-          sodium_mingw=libsodium-${{ env.SODIUM_VER }}-stable-mingw.zip
-          echo "SODIUM_MINGW_FILE=libsodium-${{ env.SODIUM_VER }}-stable-mingw.zip" >> $GITHUB_ENV
-          echo "SODIUM_MINGW_URL=${{ env.SODIUM_DL_URL }}/${sodium_mingw}" >> $GITHUB_ENV
+          f_lua32=lua-${{ env.LUA_RELEASE }}_Win32_dllw6_lib.zip
+          f_lua64=lua-${{ env.LUA_RELEASE }}_Win64_dllw6_lib.zip
+          u_lua32=${{ env.LUA_DL_URL }}/$f_lua32
+          u_lua64=${{ env.LUA_DL_URL }}/$f_lua64
+          echo "LUA32_FILE=$f_lua32" >> $GITHUB_ENV
+          echo "LUA64_FILE=$f_lua64" >> $GITHUB_ENV
+          echo "LUA32_URL=$u_lua32" >> $GITHUB_ENV
+          echo "LUA64_URL=$u_lua64" >> $GITHUB_ENV
+          f_sodium_msvc=libsodium-${{ env.SODIUM_VER }}-stable-msvc.zip
+          f_sodium_mingw=libsodium-${{ env.SODIUM_VER }}-stable-mingw.tar.gz
+          u_sodium_msvc=${{ env.SODIUM_DL_URL }}/$f_sodium_msvc
+          u_sodium_mingw=${{ env.SODIUM_DL_URL }}/$f_sodium_mingw
+          echo "SODIUM_MSVC_FILE=$f_sodium_msvc" >> $GITHUB_ENV
+          echo "SODIUM_MSVC_URL=$u_sodium_msvc" >> $GITHUB_ENV
+          echo "SODIUM_MINGW_FILE=$f_sodium_mingw" >> $GITHUB_ENV
+          echo "SODIUM_MINGW_URL=$u_sodium_mingw" >> $GITHUB_ENV
+
+      - name: show env
+        run: env
 
       - name: urls.txt file, cache dirs, gh-action-cache command
         run: |
@@ -90,6 +99,7 @@ jobs:
             # dltwice <fname> <url>
             if [ ! -f $1 ]; then wget -O $1 $2 ;fi
             if [ ! -f $1 ]; then wget -O $1 $2 ;fi
+            if [ -s $1 ]; then rm $1 ;fi
           }
           cd cache-x86
           md5sum * | sort > ../MD5SUMS_x86_a
