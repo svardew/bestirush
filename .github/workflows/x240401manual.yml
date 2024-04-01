@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 env:
   LUA_VER: 5.2
-  LUA32_URL: https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip >> urls.txt
+  LUA32_URL: https://123.example.jp/api/get/lua/${{ LUA_VER }}/lua32.zip
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
