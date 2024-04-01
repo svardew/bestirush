@@ -25,7 +25,6 @@ jobs:
         touch urls.txt
         echo 5.2 >> urls.txt
         echo https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip >> urls.txt
-        echo ${{ env.LUA32_URL }} >> urls.txt
         echo '1.0.232' >> urls.txt
         cat urls.txt
     - name: check hashFiles value
@@ -41,9 +40,9 @@ jobs:
       # ^^^ cannot env.FOO refer
     steps:
     - name: edit list
-      # shell: pwsh (default)
+      shell: pwsh
       run: |
-        touch urls.txt
+        echo NUL > urls.txt
         echo 5.2 >> urls.txt
         echo https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip >> urls.txt
         echo '1.0.232' >> urls.txt
