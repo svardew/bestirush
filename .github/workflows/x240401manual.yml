@@ -20,13 +20,17 @@ jobs:
       REPO: ${{ github.repository }}
     steps:
     - name: edit list
-      # shell: bash (default)
+      shell: bash
       run: |
         touch urls.txt
         echo 5.2 >> urls.txt
         echo https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip >> urls.txt
         echo '1.0.232' >> urls.txt
         cat urls.txt
+        echo '// urls.txt is for Windows. convert LF to CRLF'
+        sed -i 's/$/\r/g' urls.txt
+        file urls.txt
+
     - name: check hashFiles value
       run: echo ${{ hashFiles('urls.txt') }}
 
