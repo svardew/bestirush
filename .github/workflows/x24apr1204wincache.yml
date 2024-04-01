@@ -123,6 +123,7 @@ jobs:
           dltwice libsodium.zip ${{ steps.url.outputs.SODIUM_MSVC }}
           dltwice libsodium.tar.gz ${{ steps.url.outputs.SODIUM_MINGW }}
           md5sum * | sort > ../MD5SUMS_x86_b
+          ls -1
           cd ../
 
       - name: download (x64)
@@ -132,15 +133,15 @@ jobs:
           md5sum * | sort > ../MD5SUMS_x64_a
           function dltwice {
             # dltwice <fname> <url>
-            if [ ! -f $1 ]; then wget -O $1 $2 ;fi
-            if [ ! -f $1 ]; then wget -O $1 $2 ;fi
-            if [ -s $1 ]; then rm $1 ;fi
+            if [ ! -f $1 ]; then wget --no-verbose --tries=2 -O $1 $2 ;fi
+            if [ ! -s $1 ]; then rm $1 ;fi
           }
           dltwice lua.zip ${{ steps.url.outputs.LUA64 }}
           dltwice ${{ env.WINPTY_FILE }} ${{ steps.url.outputs.WINPTY }}
           dltwice libsodium.zip ${{ steps.url.outputs.SODIUM_MSVC }}
           dltwice libsodium.tar.gz ${{ steps.url.outputs.SODIUM_MINGW }}
           md5sum * | sort > ../MD5SUMS_x64_b
+          ls -1
           cd ../
 
       - name: keep cache (x86)
