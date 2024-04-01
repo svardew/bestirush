@@ -18,13 +18,13 @@ jobs:
       MEMO: noop
       GH_TOKEN: ${{ secrets.github_token }}
       REPO: ${{ github.repository }}
-      LUA32_URL:  https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip
     steps:
     - name: edit list
       # shell: bash (default)
       run: |
         touch urls.txt
         echo 5.2 >> urls.txt
+        echo https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip >> urls.txt
         echo ${{ env.LUA32_URL }} >> urls.txt
         echo '1.0.232' >> urls.txt
         cat urls.txt
@@ -37,14 +37,15 @@ jobs:
       MEMO: void
       GH_TOKEN: ${{ secrets.github_token }}
       REPO: ${{ github.repository }}
-      LUA32_URL:  https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip
+      # LUA32_URL:  https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip
+      # ^^^ cannot env.FOO refer
     steps:
     - name: edit list
       # shell: pwsh (default)
       run: |
         touch urls.txt
         echo 5.2 >> urls.txt
-        echo ${{ env.LUA32_URL }} >> urls.txt
+        echo https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua32.zip >> urls.txt
         echo '1.0.232' >> urls.txt
         type urls.txt
     - name: check hashFiles value
