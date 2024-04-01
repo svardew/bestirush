@@ -174,7 +174,8 @@ jobs:
           key: Windows-x64-${{ hashFiles('urls.txt') }}
 
       - name: report cache
-        run:
+        shell: bash {0}
+        run: |
           echo '--- current windows dependencies cache ---'
           gh actions-cache list -R ${{ env.REPO }} | grep -F Windows-x
           echo '--- windows-x64 cache files ---'
