@@ -36,6 +36,7 @@ jobs:
       SODIUM_DL_URL: https://download.libsodium.org/libsodium/releases
       SODIUM_MSVC_VER: v143
       SODIUM_MINGW_VER: 26
+      GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: set env
@@ -65,6 +66,7 @@ jobs:
           mkdir cache-x64
           mkdir cache-x86
           # gh-actions-cache for delete Repository Cache via API
+          # set env.GH_TOKEN
           gh extension install actions/gh-actions-cache
 
       - name: restore cache (x86)
