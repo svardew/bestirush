@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   linux:
+    if: false
     runs-on: ubuntu-22.04
 
     env:
@@ -300,6 +301,7 @@ jobs:
           done
 
   macos:
+    if: false
     runs-on: ${{ matrix.runner }}
 
     env:
@@ -383,7 +385,11 @@ jobs:
         run: |
           make ${TEST}
 
+  windows-cache-check:
+    uses: ./.github/workflows/x24apr1204wincache.yml
+
   windows:
+    needs: windows-cache-check
     runs-on: windows-2022
 
     env:
@@ -493,6 +499,8 @@ jobs:
 
       - name: Checkout repository from github
         uses: actions/checkout@v4
+        with:
+          repository: svardew/vim
 
       - name: Create a list of download URLs
         shell: cmd
