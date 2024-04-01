@@ -76,9 +76,9 @@ jobs:
       - name: show outputs
         run: |
           echo '/* filenames */'
-          echo ${{ join(steps.fn.outputs.*, "\n") }}
+          echo ${{ join(steps.fn.outputs.*, '\n') }}
           echo '/* urls */'
-          echo ${{ join(steps.url.outputs.*, "\n") }}
+          echo ${{ join(steps.url.outputs.*, '\n') }}
 
       - name: urls.txt file, cache dirs, gh-action-cache command
         run: |
