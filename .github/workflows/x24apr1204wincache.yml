@@ -4,12 +4,13 @@ on:
   push:
     branches: ['void']
   workflow_dispatch:
+  workflow_call:
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
   # The concurrency group contains the workflow name and the branch name for
   # pull requests or the commit hash for any other events.
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  #TODO:reusing-workflows: group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -26,14 +27,11 @@ jobs:
       LUA_VER: 54
       LUA_VER_DOT: '5.4'
       LUA_RELEASE: 5.4.2
-      LUA_DL_URL: https://downloads.sourceforge.net/luabinaries
       # winpty
       WINPTY_FILE: winpty-0.4.3-msvc2015.zip
       WINPTY_VER: 0.4.3
-      WINPTY_DL_URL: https://github.com/rprichard/winpty/releases/download
       # libsodium
       SODIUM_VER: '1.0.19'
-      SODIUM_DL_URL: https://download.libsodium.org/libsodium/releases
       SODIUM_MSVC_VER: v143
       SODIUM_MINGW_VER: 26
       # repository
@@ -44,6 +42,7 @@ jobs:
       - id: fn
         name: set filename
         run: |
+          echo '/* original filenames */'
           f=winpty-${{ env.WINPTY_VER }}-msvc2015.zip
           echo "WINPTY=$f" >> $GITHUB_OUTPUT
           f=lua-${{ env.LUA_RELEASE }}_Win32_dllw6_lib.zip
@@ -57,6 +56,7 @@ jobs:
       - id: url
         name: set download url
         run: |
+          echo '/* urls */'
           url=https://github.com/rprichard/winpty/releases/download
           url=$url/${{ env.WINPTY_VER }}/${{ steps.fn.outputs.WINPTY }}
           echo "WINPTY=$url" >> $GITHUB_OUTPUT
@@ -74,19 +74,20 @@ jobs:
           echo "SODIUM_MINGW=$url" >> $GITHUB_OUTPUT
 
       - name: show outputs
+        shell: bash {0}
         run: |
           echo '/* filenames */'
-          echo ${{ join(steps.fn.outputs.*, '\n') }}
+          echo ${{ join(steps.fn.outputs.*, '  ') }}
           echo '/* urls */'
-          echo ${{ join(steps.url.outputs.*, '\n') }}
+          echo ${{ join(steps.url.outputs.*, '  ') }}
 
-      - name: urls.txt file, cache dirs, gh-action-cache command
+      - name: cachedir, urls.txt, gh-action-cache
         run: |
           touch urls.txt
           echo ${{ env.LUA_RELEASE }} >> urls.txt
           echo ${{ steps.url.outputs.WINPTY }} >> urls.txt
           echo ${{ env.SODIUM_VER }} >> urls.txt
-          # For Windows, convert LF to CRLF (sed), and check (file)'
+          # LF to CRLF
           sed -i 's/$/\r/g' urls.txt
           file urls.txt
           mkdir cache-x64
@@ -107,15 +108,14 @@ jobs:
           key: Windows-x64-${{ hashFiles('urls.txt') }}
           path: cache-x64
 
-      - name: download (x86)
+      - name: try download (x86)
         shell: bash {0}
         run: |
           cd cache-x86
           md5sum * | sort > ../MD5SUMS_x86_a
           function dltwice {
             # dltwice <fname> <url>
-            if [ ! -f $1 ]; then wget -O $1 $2 ;fi
-            if [ ! -f $1 ]; then wget -O $1 $2 ;fi
+            if [ ! -f $1 ]; then wget --no-verbose --tries=2 -O $1 $2 ;fi
             if [ ! -s $1 ]; then rm $1 ;fi
           }
           dltwice lua.zip ${{ steps.url.outputs.LUA32 }}
@@ -126,7 +126,7 @@ jobs:
           ls -1
           cd ../
 
-      - name: download (x64)
+      - name: try download (x64)
         shell: bash {0}
         run: |
           cd cache-x64
@@ -146,9 +146,12 @@ jobs:
 
       - name: keep cache (x86)
         if: ${{ hashFiles('MD5SUMS_x86_a') == hashFiles('MD5SUMS_x86_b') }}
-        run: echo 'Repository cache for Windwos-x86 is up to date.'
+        run: |
+          echo 'Repository cache for Windwos-x86 is up to date.'
+          echo 'files in cache:'
+          ls -lagGh cache-x86/
 
-      - name: delete cache (x86)
+      - name: update cache. first delete (x86)
         if: ${{ hashFiles('MD5SUMS_x86_a') != hashFiles('MD5SUMS_x86_b') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -164,7 +167,7 @@ jobs:
             gh actions-cache delete $xcache -R ${{ env.REPO }} --confirm
           fi
 
-      - name: save cache (x86)
+      - name: update cache. save (x86)
         if: ${{ hashFiles('MD5SUMS_x86_a') != hashFiles('MD5SUMS_x86_b') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -176,9 +179,12 @@ jobs:
 
       - name: keep cache (x64)
         if: ${{ hashFiles('MD5SUMS_x64_a') == hashFiles('MD5SUMS_x64_b') }}
-        run: echo 'Repository cache for Windwos-x64 is up to date.'
+        run: |
+          echo 'Repository cache for Windwos-x64 is up to date.'
+          echo 'files in cache:'
+          ls -lagGh cache-x64/
 
-      - name: delete cache (x64)
+      - name: update cache. first delete (x64)
         if: ${{ hashFiles('MD5SUMS_x64_a') != hashFiles('MD5SUMS_x64_b') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -194,7 +200,7 @@ jobs:
             gh actions-cache delete $xcache -R ${{ env.REPO }} --confirm
           fi
 
-      - name: save cache (x64)
+      - name: update cache. save (x64)
         if: ${{ hashFiles('MD5SUMS_x64_a') != hashFiles('MD5SUMS_x64_b') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -209,7 +215,7 @@ jobs:
         run: |
           echo '--- current windows cache in repository ---'
           gh actions-cache list -R ${{ env.REPO }} | grep -F Windows-x
-          echo '--- files in x64 windows cache ---'
+          echo '--- files in x64 windows cache (md5) ---'
           cat MD5SUMS_x64_b
-          echo '--- files in x86 windows cache ---'
+          echo '--- files in x86 windows cache (md5) ---'
           cat MD5SUMS_x86_b
