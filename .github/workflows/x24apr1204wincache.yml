@@ -10,7 +10,8 @@ on:
 concurrency:
   # The concurrency group contains the workflow name and the branch name for
   # pull requests or the commit hash for any other events.
-  #TODO:reusing-workflows: group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  #TODO?reusing-workflows? group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  group: ${{ github.workflow }}-check-windows-cache
   cancel-in-progress: true
 
 permissions:
