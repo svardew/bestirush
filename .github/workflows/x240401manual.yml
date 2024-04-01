@@ -33,7 +33,7 @@ jobs:
     steps:
     - name: edit list
       run: |
-        type NUL > urls.txt
+        echo NUL > urls.txt
         echo 5.2.55>> urls.txt
         echo https://123.example.jp/api/get/lua/${{ env.LUA_VER }}/lua.zip >> urls.txt
         echo '1.0.232' >> urls.txt
