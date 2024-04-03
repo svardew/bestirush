@@ -63,7 +63,7 @@ jobs:
     # ^^^ pass sercerts to called workflow
 
   use-cache:
-    needs: [verify-cache-and-save]
+    needs: [call-update-cache]
     runs-on: ubuntu-22.04
     steps:
      - name: echo now
