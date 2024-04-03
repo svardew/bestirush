@@ -37,12 +37,13 @@ jobs:
           #= echo 1234 >> cachedir/line1
           #= echo 'https://example.com/pool/a/as/asdf/asdfqwert.zip' >> cachedir/line2
           #= echo 6789 >> cachedir/line3
+          test -d repocache || mkdir repocache
       - name: restore cache
         uses: actions/cache/restore@v4
         with:
           key: Kash-${{ hashFiles('keyfile') }}
           path: repocache
-      - name: download files (dummy, localdir cp files)
+      - name: check repocache
         run: |
           echo '--- files in repocache ---'
           ls -1 repocache
@@ -50,7 +51,7 @@ jobs:
   verify-cache-and-save:
     needs: [restore-cache]
     runs-on: ubuntu-22.04
-    stesp:
+    steps:
       - name: echo ver
         run: uname -a
 
