@@ -45,7 +45,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           key: Kash-manually # ${{ hashFiles('keyfile') }}
-          restore-key:
+          restore-key: |
             # use latest cache match /^Kash-ver/
             # each cache named Kash-ver-${{ github.run_id }}
             # latest means verified-and-correct-file-set cache
