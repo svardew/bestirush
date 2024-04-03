@@ -1,4 +1,4 @@
-name: Manage cache main-wf with sub.yml
+name: Manage cache with caller/called workflow cooperation
 
 on:
   push:
@@ -51,11 +51,16 @@ jobs:
   call-update-cache:
     needs: [restore-cache]
     # commit 26a176e694c88c014cec03c14f70915c26e3dedb
-    uses: ./.github/workflows/j0409sub.yml@26a176e694c88c014cec03c14f70915c26e3dedb
+    # uses: ./.github/workflows/j0409sub.yml@26a176e694c88c014cec03c14f70915c26e3dedb
+    # ^^^ [./.github/workflows/FILENAME] allowed only [caller/called] at same commit
+    uses: svardew/dew/.github/workflows/j0409sub.yml@26a176e694c88c014cec03c14f70915c26e3dedb
+    # ^^^ OWNER/REPO/.gi_/wor_/FILENAME@REF is better
     # runs-on: ubuntu-22.04
     # steps:
     #   - name: echo ver
     #     run: uname -a
+    secrets: inherit
+    # ^^^ pass sercerts to called workflow
 
   use-cache:
     needs: [verify-cache-and-save]
