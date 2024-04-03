@@ -36,7 +36,7 @@ jobs:
           cat keyfile
           file keyfile
           # cache 3 dummy files
-          test -d stored_cache || mkdir cachedir
+          test -d stored_cache || mkdir stored_cache
           echo 1234 >> stored_cache/line1
           echo 'https://example.com/pool/a/as/asdf/asdfqwert.zip' >> stored_cache/line2
           echo 6789 >> stored_cache/line3
@@ -50,7 +50,8 @@ jobs:
         run: |
           echo '--- files in repocache ---'
           ls -1 repocache
-
+          echo '--- files in stored_cache ---'
+          ls -lhgG stored_cache
 
   call-update-cache:
     needs: [restore-cache]
