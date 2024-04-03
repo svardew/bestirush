@@ -57,7 +57,7 @@ jobs:
           echo '--- files in repocache, next-step actions/cache/save ---'
           ls -1 repocache
       - name: save repocache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/save@v4
         with:
           key: Kash-${{ hashFiles('keyfile') }}
           path: repocache
