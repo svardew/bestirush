@@ -50,7 +50,8 @@ jobs:
 
   call-update-cache:
     needs: [restore-cache]
-    uses: ./.github/workflows/j0409sub.yml@main
+    # commit 26a176e694c88c014cec03c14f70915c26e3dedb
+    uses: ./.github/workflows/j0409sub.yml@26a176e694c88c014cec03c14f70915c26e3dedb
     # runs-on: ubuntu-22.04
     # steps:
     #   - name: echo ver
