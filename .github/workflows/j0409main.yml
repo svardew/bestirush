@@ -48,12 +48,13 @@ jobs:
           echo '--- files in repocache ---'
           ls -1 repocache
 
-  verify-cache-and-save:
+  call-update-cache:
     needs: [restore-cache]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: echo ver
-        run: uname -a
+    uses: .github/workflows/j0409sub.yml
+    # runs-on: ubuntu-22.04
+    # steps:
+    #   - name: echo ver
+    #     run: uname -a
 
   use-cache:
     needs: [verify-cache-and-save]
