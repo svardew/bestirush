@@ -16,7 +16,7 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 env:
-  call-sync-ver: 1
+  call-sync-ver: 2
 
 jobs:
   restore-cache:

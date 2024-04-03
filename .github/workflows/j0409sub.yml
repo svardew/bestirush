@@ -15,7 +15,7 @@ concurrency:
   # contents: read # to fetch code (actions/checkout)
 
 env:
-  call-sync-ver: 1
+  call-sync-ver: 2
 
 jobs:
   verify-cache-and-save:
@@ -40,6 +40,12 @@ jobs:
           sed -i 's/$/\r/g' keyfile
           cat keyfile
           file keyfile
+          # cache 3 dummy files
+          test -d stored_cache || mkdir stored_cache
+          echo 20241234 >> stored_cache/line1
+          echo 'https://2024.example.com/pool/a/as/asdf/asdfqwert.zip' >> stored_cache/line2
+          echo 20246789 >> stored_cache/line3
+          test -d repocache || mkdir repocache
           #= # cache 3 dummy files
           #= test -d cachedir || mkdir cachedir
           #= echo 1234 >> cachedir/line1
