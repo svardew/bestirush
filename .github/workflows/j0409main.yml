@@ -50,7 +50,7 @@ jobs:
 
   call-update-cache:
     needs: [restore-cache]
-    uses: .github/workflows/j0409sub.yml
+    uses: ${{ github.repository}}/.github/workflows/j0409sub.yml@main
     # runs-on: ubuntu-22.04
     # steps:
     #   - name: echo ver
