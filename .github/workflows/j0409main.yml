@@ -52,6 +52,15 @@ jobs:
           ls -1 repocache
           echo '--- files in stored_cache ---'
           ls -lhgG stored_cache
+          echo '-- sync stored_cache -> repocache ---'
+          cp -vn stored_cache/* ./repocache/
+          echo '--- files in repocache, next-step actions/cache/save ---'
+          ls -1 repocache
+      - name: save repocache
+        uses: actions/cache/restore@v4
+        with:
+          key: Kash-${{ hashFiles('keyfile') }}
+          path: repocache
 
   call-update-cache:
     needs: [restore-cache]
