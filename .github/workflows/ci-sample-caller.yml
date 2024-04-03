@@ -2,7 +2,7 @@ name: call workflow and permissions
 
 on:
   push:
-    branches: ['**']
+    branches: ['none'] # ['**']
   pull_request:
   workflow_dispatch:
 
@@ -316,53 +316,54 @@ jobs:
       #    name: vim${{ matrix.bits }}-${{ matrix.toolchain }}
       #    path: ./artifacts
 
-#-noop-/      - name: Test and show the result of testing gVim
-#-noop-/        if: matrix.GUI == 'yes' || matrix.VIMDLL == 'yes'
-#-noop-/        shell: cmd
-#-noop-/        timeout-minutes: 15
-#-noop-/        run: |
-#-noop-/          PATH %LUA_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%;%PYTHON3_DIR%;%SODIUM_LIB%
-#-noop-/          call "%VCVARSALL%" %VCARCH%
-#-noop-/
-#-noop-/          echo %COL_GREEN%Test gVim:%COL_RESET%
-#-noop-/          cd src\testdir
-#-noop-/          if "${{ matrix.GUI }}"=="yes" (
-#-noop-/            nmake -nologo -f Make_mvc.mak VIMPROG=..\gvim || exit 1
-#-noop-/          ) else (
-#-noop-/            @rem Run only tiny tests.
-#-noop-/            nmake -nologo -f Make_mvc.mak tiny VIMPROG=..\gvim  || exit 1
-#-noop-/          )
+      - name: Test and show the result of testing gVim
+        if: false && (matrix.GUI == 'yes' || matrix.VIMDLL == 'yes')
+        shell: cmd
+        timeout-minutes: 15
+        run: |
+          PATH %LUA_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%;%PYTHON3_DIR%;%SODIUM_LIB%
+          call "%VCVARSALL%" %VCARCH%
 
-#-noop-/      - name: Test and show the result of testing Vim
-#-noop-/        if: matrix.GUI == 'no' || matrix.VIMDLL == 'yes'
-#-noop-/        shell: cmd
-#-noop-/        timeout-minutes: 15
-#-noop-/        run: |
-#-noop-/          PATH %LUA_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%;%PYTHON3_DIR%;%SODIUM_LIB%
-#-noop-/          call "%VCVARSALL%" %VCARCH%
-#-noop-/
-#-noop-/          echo %COL_GREEN%Test Vim:%COL_RESET%
-#-noop-/          cd src\testdir
-#-noop-/          nmake -nologo -f Make_mvc.mak clean
-#-noop-/          if "${{ matrix.GUI }}"=="no" (
-#-noop-/            nmake -nologo -f Make_mvc.mak VIMPROG=..\vim || exit 1
-#-noop-/          ) else (
-#-noop-/            @rem Run only tiny tests.
-#-noop-/            nmake -nologo -f Make_mvc.mak tiny VIMPROG=..\vim  || exit 1
-#-noop-/          )
+          echo %COL_GREEN%Test gVim:%COL_RESET%
+          cd src\testdir
+          if "${{ matrix.GUI }}"=="yes" (
+            nmake -nologo -f Make_mvc.mak VIMPROG=..\gvim || exit 1
+          ) else (
+            @rem Run only tiny tests.
+            nmake -nologo -f Make_mvc.mak tiny VIMPROG=..\gvim  || exit 1
+          )
 
-#-noop-/      - name: Generate gcov files
-#-noop-/        if: matrix.coverage
-#-noop-/        shell: msys2 {0}
-#-noop-/        run: |
-#-noop-/          cd src
-#-noop-/          find . -type f -name '*.gcno' -exec gcov -pb {} + || true
+      - name: Test and show the result of testing Vim
+        if: false && (matrix.GUI == 'no' || matrix.VIMDLL == 'yes')
+        shell: cmd
+        timeout-minutes: 15
+        run: |
+          PATH %LUA_DIR%;C:\msys64\%MSYSTEM%\bin;%PATH%;%PYTHON3_DIR%;%SODIUM_LIB%
+          call "%VCVARSALL%" %VCARCH%
 
-#-noop-/      - name: Codecov
-#-noop-/        timeout-minutes: 20
-#-noop-/        if: matrix.coverage
-#-noop-/        uses: codecov/codecov-action@v4
-#-noop-/        with:
-#-noop-/          directory: src
-#-noop-/          flags: windows,${{ matrix.toolchain }}-${{ matrix.arch }}-${{ matrix.features }}
-#-noop-/          token: ${{ secrets.CODECOV_TOKEN }}
+          echo %COL_GREEN%Test Vim:%COL_RESET%
+          cd src\testdir
+          nmake -nologo -f Make_mvc.mak clean
+          if "${{ matrix.GUI }}"=="no" (
+            nmake -nologo -f Make_mvc.mak VIMPROG=..\vim || exit 1
+          ) else (
+            @rem Run only tiny tests.
+            nmake -nologo -f Make_mvc.mak tiny VIMPROG=..\vim  || exit 1
+          )
+
+      - name: Generate gcov files
+        if: matrix.coverage && false
+        shell: msys2 {0}
+        run: |
+          cd src
+          find . -type f -name '*.gcno' -exec gcov -pb {} + || true
+
+      - name: Codecov
+        timeout-minutes: 20
+        if: matrix.coverage && false
+        uses: codecov/codecov-action@v4
+        with:
+          directory: src
+          flags: windows,${{ matrix.toolchain }}-${{ matrix.arch }}-${{ matrix.features }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+
