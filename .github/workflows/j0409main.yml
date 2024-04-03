@@ -15,6 +15,9 @@ concurrency:
 permissions:
   contents: read # to fetch code (actions/checkout)
 
+env:
+  call-sync-ver: 1
+
 jobs:
   restore-cache:
     runs-on: ubuntu-22.04
@@ -53,8 +56,10 @@ jobs:
     # commit 26a176e694c88c014cec03c14f70915c26e3dedb
     # uses: ./.github/workflows/j0409sub.yml@26a176e694c88c014cec03c14f70915c26e3dedb
     # ^^^ [./.github/workflows/FILENAME] allowed only [caller/called] at same commit
-    uses: svardew/dew/.github/workflows/j0409sub.yml@26a176e694c88c014cec03c14f70915c26e3dedb
+    # uses: svardew/dew/.github/workflows/j0409sub.yml@26a176e694c88c014cec03c14f70915c26e3dedb
     # ^^^ OWNER/REPO/.gi_/wor_/FILENAME@REF is better
+    uses: ./.github/workflows/j0409sub.yml
+    # ^^^ this simple style needs same commit in caller, so caller/called increments env.syncver
     # runs-on: ubuntu-22.04
     # steps:
     #   - name: echo ver
