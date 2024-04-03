@@ -157,9 +157,9 @@ jobs:
       - name: Download dependencies
         shell: cmd
         run: |
-          echo '>>> files in downloads/ ---'
+          echo ___ files in downloads ___
           dir downloads
-          echo '<<< files in downloads/ ---'
+          echo ___ _____ __ _________ ___
           path C:\Program Files\7-Zip;%path%
           if not exist downloads mkdir downloads
 
