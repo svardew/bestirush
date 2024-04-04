@@ -86,5 +86,18 @@ jobs:
     steps:
      - name: echo now
        run: env
+     - name: which cache is used
+       run: mkdir checkrepocache
+     - name: restore cache
+       uses: actions/cache/restore@v4
+       with:
+         key: Kash-manually
+         restore-keys: |
+           Kash-ver_
+         path: checkrepocache
+     - name: list current cache
+       run: ls -lagGh checkrepocache
+
+
 
 
