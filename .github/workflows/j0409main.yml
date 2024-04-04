@@ -1,9 +1,9 @@
 name: Manage cache with caller/called workflow cooperation
 
 on:
-  push:
-    branches: ['**']
-  # workflow_dispatch:
+  # push:
+    # branches: ['**']
+  workflow_dispatch:
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
@@ -84,19 +84,26 @@ jobs:
     needs: [call-update-cache]
     runs-on: ubuntu-22.04
     steps:
-     - name: echo now
-       run: env
-     - name: which cache is used
-       run: mkdir checkrepocache
-     - name: restore cache
-       uses: actions/cache/restore@v4
-       with:
-         key: Kash-manually
-         restore-keys: |
-           Kash-ver_
-         path: checkrepocache
-     - name: list current cache
-       run: ls -lagGh checkrepocache
+      - name: echo now
+        run: env
+      - name: which cache is used
+        run: mkdir checkrepocache
+      # - name: restore cache
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     key: Kash-manually
+      #     restore-keys: |
+      #       Kash-ver_
+      #     path: repocache
+      - name: restore cache
+        uses: actions/cache/restore@v4
+        with:
+          key: Kash-manually
+          restore-keys: |
+            Kash-ver_
+          path: checkrepocache
+      - name: list current cache
+        run: ls -lagGh checkrepocache
 
 
 
