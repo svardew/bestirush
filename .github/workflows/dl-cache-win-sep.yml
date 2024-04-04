@@ -1,8 +1,9 @@
 name: windows cache management
 
 on:
-  # push:
-    # branches: ['**']
+  push:
+    branches: ['**']
+  pull_request:
   workflow_dispatch:
 
 # Cancels all previous workflow runs for pull requests that have not completed.
@@ -91,8 +92,10 @@ jobs:
             echo "KEEPCACHE=yes" >> $GITHUB_OUTPUT
           else
             cp -vn wgetdir/*.* ./downloads/
+            cd downloads/
             sha256sum *.* | sort > SHA256SUMS
             sed -i 's:$:\r:g' SHA256SUMS
+            cd ../
             echo "KEEPCACHE=no" >> $GITHUB_OUTPUT
           fi
           echo '-- files in downloads --'
