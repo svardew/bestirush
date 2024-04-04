@@ -39,7 +39,6 @@ jobs:
         run: |
           test -d wgetdir || mkdir wgetdir
           test -d downloads || mkdir downloads
-          touch downloads/SHA256SUMS
           # url
           luaver=${{ env.LUA_RELEASE }}
           url=${{ env.LUA32_URL }}
@@ -64,8 +63,7 @@ jobs:
           path: downloads
           # actions/cache/save cache into Windows-deps-${{ github.run_id }}
           # restore latest cache
-          # ignore key: params.
-          key: Windows-dependencies-manually-ver0
+          key: not-exists-dummycache-Windows-dependencies
           restore-keys: |
             Windows-deps
 
@@ -74,37 +72,35 @@ jobs:
         shell: bash {0}
         run: |
           cd wgetdir
+          cnt=''
           dltwice () {
-            url=$1
-            fn=$(echo $url | sed 's:.*/::')
-            test -f ../downloads/$fn || wget -nv --waitretry=20 --tries=2 -O $fn $url;
+            # $cnt report dwonloaded files
+            url="$1"
+            fn="$(echo $url | sed 's:.*/::')"
+            test -f "../downloads/$fn" || wget -nv --waitretry=20 --tries=2 -O "./$fn" $url
+            test -f "$fn" && cnt="${cnt}$fn"
           }
           dltwice ${{ steps.url.outputs.LUA32_URL }}
           dltwice ${{ steps.url.outputs.LUA64_URL }}
           dltwice ${{ steps.url.outputs.WINPTY_URL }}
           dltwice ${{ steps.url.outputs.SODIUM_MSVC_URL }}
           dltwice ${{ steps.url.outputs.SODIUM_MINGW_URL }}
-          sha256sum *.* | sort > SHA256SUMS
-          sed -i 's:$:\r:g' SHA256SUMS
-          cd ../downloads
-          sha256sum *.* | sort > SHA256SUMS
-          sed -i 's:$:\r:g' SHA256SUMS
           cd ../
-          if [ "$(cat downloads/SHA256SUMS)" = "$(cat wgetdir/SHA256SUMS)" ]
-          then echo "KEEPCACHE=yes" >> $GITHUB_OUTPUT
-          else echo "KEEPCACHE=no" >> $GITHUB_OUTPUT
+          if [ -z "$cnt" ]; then
+            echo "KEEPCACHE=yes" >> $GITHUB_OUTPUT
+          else
+            cp -vn wgetdir/*.* ./downloads/
+            sha256sum *.* | sort > SHA256SUMS
+            sed -i 's:$:\r:g' SHA256SUMS
+            echo "KEEPCACHE=no" >> $GITHUB_OUTPUT
           fi
-
-      - name: Update cache files
-        if: ${{ steps.download.outputs.KEEPCACHE != 'yes' }}
-        run: |
-          cd downloads/
-          cp -vn ../wgetdir/*.* ./
-          sha256sum *.* > SHA256SUMS
-          sed -i 's,$,\r,g' SHA256SUMS
+          echo '-- files in downloads --'
+          sha256sums downloads/*
+          echo '-- files in wgetdir --'
+          ls -1 wgetdir
 
       - name: Save cache
-        if: ${{ steps.download.outputs.KEEPCACHE != 'yes' }}
+        if: ${{ steps.download.outputs.KEEPCACHE == 'no' }}
         uses: actions/cache/save@v4
         with:
           path: downloads
