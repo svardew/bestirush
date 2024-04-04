@@ -44,12 +44,9 @@ jobs:
       - name: restore cache
         uses: actions/cache/restore@v4
         with:
-          key: Kash-manually # ${{ hashFiles('keyfile') }}
-          restore-key: |
-            # use latest cache match /^Kash-ver/
-            # each cache named Kash-ver-${{ github.run_id }}
-            # latest means verified-and-correct-file-set cache
-            - Kash-ver-
+          key: Kash-manually
+          restore-keys: |
+            Kash-ver_
           path: repocache
       - name: check repocache
         run: |
@@ -64,7 +61,7 @@ jobs:
       - name: save repocache
         uses: actions/cache/save@v4
         with:
-          key: Kash-ver-${{ github.run_id }}
+          key: Kash-ver_${{ github.run_id }}
           path: repocache
 
   call-update-cache:
