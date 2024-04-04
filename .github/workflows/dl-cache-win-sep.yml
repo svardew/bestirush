@@ -95,7 +95,7 @@ jobs:
             echo "KEEPCACHE=no" >> $GITHUB_OUTPUT
           fi
           echo '-- files in downloads --'
-          sha256sums downloads/*
+          sha256sum downloads/*
           echo '-- files in wgetdir --'
           ls -1 wgetdir
 
