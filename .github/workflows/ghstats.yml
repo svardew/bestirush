@@ -1,8 +1,6 @@
 name: githubstatus.com
 
 on:
-  push:
-    branches: ['**']
   workflow_dispatch:
 
 # Cancels all previous workflow runs for pull requests that have not completed.
