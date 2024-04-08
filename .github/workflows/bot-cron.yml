@@ -44,7 +44,7 @@ jobs:
           path: cache_deps
           key: Windows-deps-8549941596
           restore-keys: |
-            Windows-depcache-
+            Windows-
 
       - name: check cache
         run: |
