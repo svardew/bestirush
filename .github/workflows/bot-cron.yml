@@ -80,7 +80,7 @@ jobs:
 
       - name: delete repository cache (x86)
         id: delete86
-        if: steps.check86.outputs.FLAG != ""
+        if: steps.check86.outputs.FLAG != ''
         run: |
           mv cache_x86 downloads
           gh extension install actions/gh-actions-cache
@@ -96,7 +96,7 @@ jobs:
           echo "FLAG=savecache" >> $GITHUB_OUTPUT
 
       - name: save cache (x86)
-        if: steps.delete86.outputs.FLAG == "savecache"
+        if: steps.delete86.outputs.FLAG == 'savecache'
         uses: actions/cache/save@v4
         with:
           path: downloads
