@@ -38,11 +38,15 @@ jobs:
         with:
           repository: ${{ github.repository }}
 
+      - name: setup cache
+        run: |
+          test -d cache_deps || mkdir cache_deps
+
       - name: restore cache
         uses: actions/cache/restore@v4
         with:
           path: cache_deps
-          key: Windows-deps-8549941596
+          key: 'Windows-deps-8549941596'
           restore-keys: |
             Windows-
 
