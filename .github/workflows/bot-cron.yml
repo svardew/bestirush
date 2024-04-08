@@ -41,8 +41,6 @@ jobs:
       - name: setup downloads, urls.txt
         run: |
           test -d ${{ env.CACHEDIR }} || mkdir ${{ env.CACHEDIR }}
-          test -d cache_x86 || mkdir cache_x86
-          test -d cache_x64 || mkdir cache_x64
           # touch MD5SUMS
           # echo ${{ env.MD5SUMS }} > MD5SUMS
           touch urls.txt
@@ -50,6 +48,8 @@ jobs:
           echo ${{ env.WINPTY_URL }} >> urls.txt
           echo ${{ env.SODIUM_VER }} >> urls.txt
           sed -i 's/$/\r/g' urls.txt
+          echo '-- urls.txt --'
+          cat urls.txt
 
       - name: restore cache (x86)
         uses: actions/cache/restore@v4
@@ -57,7 +57,7 @@ jobs:
           path: ${{ env.CACHEDIR }}
           key: Windows-x86-${{ hashFiles('urls.txt') }}
           restore-keys: |
-            Windows-
+            Windows-x86-
 
       - name: check cache, download file (x86)
         id: check86
@@ -65,22 +65,25 @@ jobs:
         run: |
           mv ${{ env.CACHEDIR }} cache_x86
           cd cache_x86
-          flag=""
+          flag="_"
           dltwice () {
-            if [ ! -f $1 ]; then
-              flag=${flag}$1
+            if [ ! -f "$1" ]; then
+              flag="$flag""$1"
               wget -nv --waitretry=20 --tries=2 -O $1 $2
             fi
+            echo $flag
           }
           dltwice lua.zip    ${{ env.LUA32_URL }}
           dltwice winpty.zip ${{ env.WINPTY_URL }}
           dltwice libsodium.zip    ${{ env.SODIUM_MSVC_URL }}
           dltwice libsodium.tar.gz ${{ env.SODIUM_MINGW_URL }}
+          echo '-- files cache_x86 --'
+          ls ./
           echo "FLAG=$flag" >> $GITHUB_OUTPUT
 
       - name: delete repository cache (x86)
         id: delete86
-        if: steps.check86.outputs.FLAG != ''
+        if: ${{ steps.check86.outputs.FLAG != '_' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -96,9 +99,10 @@ jobs:
             gh actions-cache delete $key -R ${{ github.repository }} --confirm
           fi
           echo "FLAG=savecache" >> $GITHUB_OUTPUT
+          gh actions-cache list
 
       - name: save cache (x86)
-        if: steps.delete86.outputs.FLAG == 'savecache'
+        if: ${{ steps.delete86.outputs.FLAG == 'savecache' }}
         uses: actions/cache/save@v4
         with:
           path: downloads
