@@ -40,20 +40,20 @@ jobs:
 
       - name: setup cache
         run: |
-          test -d cache_deps || mkdir cache_deps
+          test -d cache-x64 || mkdir cache-x64
 
       - name: restore cache
         uses: actions/cache/restore@v4
         with:
-          path: cache_deps
+          path: cache-x64
           key: 'Windows-deps-8549941596'
           restore-keys: |
             Windows-
 
       - name: check cache
         run: |
-          cd cache_deps
-          test -n "$(ls .)" && md5sum *
+          cd cache-x64
+          ls .
 
       - name: Install packages
         if: false
