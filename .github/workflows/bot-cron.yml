@@ -72,15 +72,17 @@ jobs:
               wget --tries=2 -O $1 $2
             fi
           }
-          dltwice -O lua.zip ${{ env.LUA32_URL }}
-          dltwice -O winpty.zip ${{ env.WINPTY_URL }}
-          dltwice -O libsodium.zip ${{ env.SODIUM_MSVC_URL }}
-          dltwice -O libsodium.tar.gz ${{ env.SODIUM_MINGW_URL }}
+          dltwice lua.zip    ${{ env.LUA32_URL }}
+          dltwice winpty.zip ${{ env.WINPTY_URL }}
+          dltwice libsodium.zip    ${{ env.SODIUM_MSVC_URL }}
+          dltwice libsodium.tar.gz ${{ env.SODIUM_MINGW_URL }}
           echo "FLAG=$flag" >> $GITHUB_OUTPUT
 
       - name: delete repository cache (x86)
         id: delete86
         if: steps.check86.outputs.FLAG != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv cache_x86 downloads
           gh extension install actions/gh-actions-cache
