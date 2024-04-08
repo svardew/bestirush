@@ -55,7 +55,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.CACHEDIR }}
-          key: ${{ runner.os }}-x86-${{ hashFiles('urls.txt') }}
+          key: Windows-x86-${{ hashFiles('urls.txt') }}
           restore-keys: |
             Windows-
 
@@ -86,7 +86,7 @@ jobs:
         run: |
           mv cache_x86 downloads
           gh extension install actions/gh-actions-cache
-          key=${{ runner.os }}-x86-${{ hashFiles('urls.txt') }}
+          key=Windows-x86-${{ hashFiles('urls.txt') }}
           id=$(
             gh actions-cache list -R ${{ github.repository }} |
             grep -E '^[0-9]\+\s\+'$key
@@ -102,7 +102,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: downloads
-          key: ${{ runner.os }}-x86-${{ hashFiles('urls.txt') }}
+          key: Windows-x86-${{ hashFiles('urls.txt') }}
 
       - name: noop
         run: /bin/true
