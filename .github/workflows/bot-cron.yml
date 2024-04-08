@@ -73,7 +73,7 @@ jobs:
           flag="_"
           dltwice () {
             if [ ! -f "$1" ]; then
-              flag="$flag""$1"
+              flag="$flag"'<>'"$1"
               wget -nv --waitretry=20 --tries=2 -O $1 $2
             fi
             echo $flag
@@ -105,6 +105,7 @@ jobs:
             gh actions-cache delete $key --confirm
           fi
           echo "FLAG=savecache" >> $GITHUB_OUTPUT
+          echo '-- caches in this repo --'
           gh actions-cache list
 
       - name: save cache (x86)
