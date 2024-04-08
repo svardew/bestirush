@@ -2,114 +2,106 @@ name: chrony
 
 on:
   schedule:
-    - cron: '4/7 * * * *'  # Run once per day, to avoid Coverity's submission limits
+    - cron: '4/12 * * * *'  # Run once per day, to avoid Coverity's submission limits
   workflow_dispatch:
 
 permissions:
   contents: read # to fetch code (actions/checkout)
+  actions: write
 
 jobs:
-  scan:
+  x86-dependencies:
     runs-on: ubuntu-22.04
 
     env:
-      CC: gcc
-      DEBIAN_FRONTEND: noninteractive
-      GIT_USER: svardew
-      GIT_MAIL: svardew@gmail.com
-      # Lua Interfaces
-      LUA_VER: 54
-      LUA_VER_DOT: '5.4'
+      CACHEDIR: downloads
+      # MD5SUMS: |
+      #   8867b0380daabd12ece3dbad73197e78  libsodium-1.0.19-stable-mingw.tar.gz
+      #   113f036c91f06a9fdb11186e3dce7d93  libsodium-1.0.19-stable-msvc.zip
+      #   25b07e2b5177a2f071f109f641f9e3e4  lua-5.4.2_Win32_dllw6_lib.zip
+      #   132834e89206d893630410fa2192bd2a  lua-5.4.2_Win64_dllw6_lib.zip
+      #   a0f941c53b8e509712eeca46104674c4  winpty-0.4.3-msvc2015.zip
+      # Lua32
       LUA_RELEASE: 5.4.2
-      LUA32_URL: https://downloads.sourceforge.net/luabinaries/lua-%LUA_RELEASE%_Win32_dllw6_lib.zip
-      LUA64_URL: https://downloads.sourceforge.net/luabinaries/lua-%LUA_RELEASE%_Win64_dllw6_lib.zip
+      LUA32_URL: https://downloads.sourceforge.net/luabinaries/lua-5.4.2_Win32_dllw6_lib.zip
+      LUA32_FILE: lua-5.4.2_Win32_dllw6_lib.zip
+      LUA64_URL: https://downloads.sourceforge.net/luabinaries/lua-5.4.2_Win64_dllw6_lib.zip
+      LUA64_FILE: lua-5.4.2_Win64_dllw6_lib.zip
       # winpty
       WINPTY_URL: https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip
+      WINPTY_FILE: winpty-0.4.3-msvc2015.zip
       # libsodium
-      SODIUM_VER: '1.0.19'
-      SODIUM_MSVC_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-msvc.zip
-      SODIUM_MINGW_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-mingw.tar.gz
-      SODIUM_MSVC_VER: v143
-      SODIUM_MINGW_VER: 26
+      SODIUM_VER: 1.0.19
+      SODIUM_MSVC_URL: https://download.libsodium.org/libsodium/releases/libsodium-1.0.19-stable-msvc.zip
+      SODIUM_MSVC_FILE: libsodium-1.0.19-stable-msvc.zip
+      SODIUM_MINGW_URL: https://download.libsodium.org/libsodium/releases/libsodium-1.0.19-stable-mingw.tar.gz
+      SODIUM_MINGW_FILE: libsodium-1.0.19-stable-mingw.tar.gz
 
     steps:
-      - name: Checkout repository from github
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository }}
-
-      - name: setup cache
+      - name: setup downloads, urls.txt
         run: |
-          test -d downloads || mkdir downloads
+          test -d ${{ env.CACHEDIR }} || mkdir ${{ env.CACHEDIR }}
+          test -d cache_x86 || mkdir cache_x86
+          test -d cache_x64 || mkdir cache_x64
+          # touch MD5SUMS
+          # echo ${{ env.MD5SUMS }} > MD5SUMS
+          touch urls.txt
+          echo ${{ env.LUA_RELEASE }} >> urls.txt
+          echo ${{ env.WINPTY_URL }} >> urls.txt
+          echo ${{ env.SODIUM_VER }} >> urls.txt
+          sed -i 's/$/\r/g' urls.txt
 
-      - name: restore cache
+      - name: restore cache (x86)
         uses: actions/cache/restore@v4
         with:
-          path: downloads
-          key: 'Windows-deps-8549941596'
+          path: ${{ env.CACHEDIR }}
+          key: ${{ runner.os }}-x86-${{ hashFiles('urls.txt') }}
           restore-keys: |
             Windows-
 
-      - name: check cache
+      - name: check cache, download file (x86)
+        id: check86
+        shell: bash {0}
         run: |
-          cd downloads
-          ls .
-          md5sum *.*
+          mv ${{ env.CACHEDIR }} cache_x86
+          cd cache_x86
+          flag=""
+          dltwice () {
+            if [ ! -f $1 ]; then
+              flag=${flag}$1
+              wget --tries=2 -O $1 $2
+            fi
+          }
+          dltwice -O lua.zip ${{ env.LUA32_URL }}
+          dltwice -O winpty.zip ${{ env.WINPTY_URL }}
+          dltwice -O libsodium.zip ${{ env.SODIUM_MSVC_URL }}
+          dltwice -O libsodium.tar.gz ${{ env.SODIUM_MINGW_URL }}
+          echo "FLAG=$flag" >> $GITHUB_OUTPUT
 
-      - name: Install packages
-        if: false
+      - name: delete repository cache (x86)
+        id: delete86
+        if: steps.check86.outputs.FLAG != ""
         run: |
-          sudo apt-get update && sudo apt-get install -y \
-            autoconf \
-            gettext \
-            libcanberra-dev \
-            libperl-dev \
-            python2-dev \
-            python3-dev \
-            liblua5.4-dev \
-            lua5.4 \
-            ruby-dev \
-            tcl-dev \
-            libgtk2.0-dev \
-            desktop-file-utils \
-            libtool-bin \
-            libsodium-dev
+          mv cache_x86 downloads
+          gh extension install actions/gh-actions-cache
+          key=${{ runner.os }}-x86-${{ hashFiles('urls.txt') }}
+          id=$(
+            gh actions-cache list -R ${{ github.repository }} |
+            grep -E '^[0-9]\+\s\+'$key
+            cut -f1
+          )
+          if [ -n "$id" ]; then
+            gh actions-cache delete $key -R ${{ github.repository }} --confirm
+          fi
+          echo "FLAG=savecache" >> $GITHUB_OUTPUT
 
-      - name: Set up environment
-        run: |
-          git config user.name ${{ env.GIT_USER }}
-          git config user.email ${{ env.GIT_MAIL }}
-          # echo "$(pwd)/cov-scan/bin" >> $GITHUB_PATH
-          # (
-          # echo "NPROC=$(getconf _NPROCESSORS_ONLN)"
-          # echo "CONFOPT=--enable-perlinterp --enable-pythoninterp --enable-python3interp --enable-rubyinterp --enable-luainterp --enable-tclinterp"
-          # ) >> $GITHUB_ENV
-
-      - name: Configure
-        if: false #env.TOKEN
-        run: |
-          echo Configure
-
-      - name: Build/scan vim
-        if: false #env.TOKEN
-        run: |
-          echo Build, and scan
-
-      - name: Submit results
-        if: false #env.TOKEN
-        run: |
-          echo Submit results
-          # tar zcf cov-scan.tgz cov-int
-          # curl --form token=$TOKEN \
-          #   --form email=$EMAIL \
-          #   --form file=@cov-scan.tgz \
-          #   --form version="$(git rev-parse HEAD)" \
-          #   --form description="Automatic GHA scan" \
-          #   'https://scan.coverity.com/builds?project=vim'
-        env:
-          EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
+      - name: save cache (x86)
+        if: steps.delete86.outputs.FLAG == "savecache"
+        uses: actions/cache/save@v4
+        with:
+          path: downloads
+          key: ${{ runner.os }}-x86-${{ hashFiles('urls.txt') }}
 
       - name: noop
-        run: |
-          echo bye
+        run: /bin/true
 
