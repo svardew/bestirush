@@ -2,7 +2,7 @@ name: chrony
 
 on:
   schedule:
-    - cron: '3,6,9,12,15,18,21,24,27,30 * * * *'  # Run once per day, to avoid Coverity's submission limits
+    - cron: '3/3 * * * *'  # Run once per day, to avoid Coverity's submission limits
   workflow_dispatch:
 
 permissions:
@@ -36,7 +36,20 @@ jobs:
       - name: Checkout repository from github
         uses: actions/checkout@v4
         with:
-          repo: ${{ github.repository }}
+          repository: ${{ github.repository }}
+
+      - name: restore cache
+        uses: actions/cache/restore@v4
+        with:
+          directory: cache_deps
+          key: Windows-deps-8549941596
+          restore-keys: |
+            Windows-depcache-
+
+      - name: check cache
+        run: |
+          cd cache_deps
+          test -n "$(ls .)" && md5sum *
 
       - name: Install packages
         if: false
