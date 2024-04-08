@@ -38,6 +38,11 @@ jobs:
       SODIUM_MINGW_FILE: libsodium-1.0.19-stable-mingw.tar.gz
 
     steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+
       - name: setup downloads, urls.txt
         run: |
           test -d ${{ env.CACHEDIR }} || mkdir ${{ env.CACHEDIR }}
@@ -96,7 +101,8 @@ jobs:
             cut -f1
           )
           if [ -n "$id" ]; then
-            gh actions-cache delete $key -R ${{ github.repository }} --confirm
+            # gh actions-cache delete $key -R ${{ github.repository }} --confirm
+            gh actions-cache delete $key --confirm
           fi
           echo "FLAG=savecache" >> $GITHUB_OUTPUT
           gh actions-cache list
