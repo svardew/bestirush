@@ -54,7 +54,7 @@ jobs:
         run: |
           cd downloads
           ls .
-          md5sums *.*
+          md5sum *.*
 
       - name: Install packages
         if: false
