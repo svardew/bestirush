@@ -40,19 +40,19 @@ jobs:
 
       - name: setup cache
         run: |
-          test -d cache-x86 || mkdir cache-x86
+          test -d downloads || mkdir downloads
 
       - name: restore cache
         uses: actions/cache/restore@v4
         with:
-          path: cache-x86
+          path: downloads
           key: 'Windows-deps-8549941596'
           restore-keys: |
             Windows-
 
       - name: check cache
         run: |
-          cd cache-x86
+          cd downloads
           ls .
 
       - name: Install packages
