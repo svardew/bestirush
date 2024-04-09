@@ -53,6 +53,7 @@ jobs:
       - name: restore cache ${{ env.ARCH }}
         uses: actions/cache/restore@v4
         with:
+          enableCrossOsArchive: true
           path: ${{ env.CACHEDIR }}
           key: Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
           restore-keys: |
@@ -66,6 +67,7 @@ jobs:
       - name: save cache
         uses: actions/cache/save@v4
         with:
+          enableCrossOsArchive: true
           path: ${{ env.CACHEDIR }}
           key: Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
 
