@@ -71,7 +71,7 @@ jobs:
         run: |
           set +e
           gh extension install actions/gh-actions-cache
-          key=Winnows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
+          key=Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
           cacheid=$(
             gh actions-cache list -R "${REPO}" |
             grep $key |
