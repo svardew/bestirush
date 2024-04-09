@@ -7,13 +7,14 @@ on:
 
 permissions:
   contents: read # to fetch code (actions/checkout)
-  actions: write
+  actions: write # delete cache (actions/gh-actions-cache)
 
 jobs:
   x86-dependencies:
     runs-on: ubuntu-22.04
 
     env:
+      ARCH: x86
       CACHEDIR: downloads
       # MD5SUMS: |
       #   8867b0380daabd12ece3dbad73197e78  libsodium-1.0.19-stable-mingw.tar.gz
@@ -56,51 +57,55 @@ jobs:
           echo '-- urls.txt --'
           cat urls.txt
 
-      - name: restore cache (x86)
+      - name: restore cache ${{ env.ARCH }}
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.CACHEDIR }}
-          key: Windows-x86-${{ hashFiles('urls.txt') }}
+          key: Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
           restore-keys: |
-            Windows-x86-
+            Windows-${{ env.ARCH }}-
 
-      - name: check cache, download file (x86)
-        id: check86
+      - name: check cache, download missing file
+        id: checkcache
         shell: bash {0}
         run: |
-          mv ${{ env.CACHEDIR }} cache_x86
-          cd cache_x86
-          flag="_"
+          mv ${{ env.CACHEDIR }} cache_${{ env.ARCH }}
+          cd cache_${{ env.ARCH }}
+          flag=""
           dltwice () {
             if [ ! -f "$1" ]; then
-              flag="$flag"'<>'"$1"
+              flag="$flag"'x'
               wget -nv --waitretry=20 --tries=2 -O $1 $2
+            else
+              flag="$flag"'o'
             fi
-            echo $flag
           }
           dltwice lua.zip    ${{ env.LUA32_URL }}
           dltwice winpty.zip ${{ env.WINPTY_URL }}
           dltwice libsodium.zip    ${{ env.SODIUM_MSVC_URL }}
           dltwice libsodium.tar.gz ${{ env.SODIUM_MINGW_URL }}
-          echo '-- files cache_x86 --'
+          echo '-- files ./cache_x86 --'
           ls ./
+          flag=${flag//o/}
           echo "FLAG=$flag" >> $GITHUB_OUTPUT
 
-      - name: delete repository cache (x86)
-        id: delete86
-        if: ${{ steps.check86.outputs.FLAG != '_' }}
+      - name: delete repository cache
+        id: deletecache
+        if: ${{ contains(steps.checkcache.outputs.FLAG, 'x') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mv cache_x86 downloads
+          test -d ${{ env.CACHEDIR }} && rm -rf ${{ env.CACHEDIR }}
+          mv cache_${{ env.ARCH }} ${{ env.CACHEDIR }}
           gh extension install actions/gh-actions-cache
-          key=Windows-x86-${{ hashFiles('urls.txt') }}
+          key=Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
           id=$(
             gh actions-cache list -R ${{ github.repository }} |
             grep -E '^[0-9]\+\s\+'$key
             cut -f1
           )
           if [ -n "$id" ]; then
+            echo "/* delete repository cache [id:$id] */"
             # gh actions-cache delete $key -R ${{ github.repository }} --confirm
             gh actions-cache delete $key --confirm
           fi
@@ -108,12 +113,12 @@ jobs:
           echo '-- caches in this repo --'
           gh actions-cache list
 
-      - name: save cache (x86)
-        if: ${{ steps.delete86.outputs.FLAG == 'savecache' }}
+      - name: save cache
+        if: ${{ contains(steps.deletecache.outputs.FLAG, 'savecache') }}
         uses: actions/cache/save@v4
         with:
-          path: downloads
-          key: Windows-x86-${{ hashFiles('urls.txt') }}
+          path: ${{ env.CACHEDIR }}
+          key: Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
 
       - name: noop
         run: /bin/true
