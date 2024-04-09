@@ -73,7 +73,7 @@ jobs:
           gh extension install actions/gh-actions-cache
           key=Winnows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
           cacheid=$(
-            gh actions-cache list -R "${REPO}" -B "${BRANCH}" |
+            gh actions-cache list -R "${REPO}" |
             grep $key |
             cut -f1
           )
