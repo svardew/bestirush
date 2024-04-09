@@ -82,13 +82,15 @@ jobs:
             fi
           }
           dltwice lua.zip    ${{ env.LUA32_URL }}
-          dltwice lua64.zip    ${{ env.LUA64_URL }}
           dltwice winpty.zip ${{ env.WINPTY_URL }}
           dltwice libsodium.zip    ${{ env.SODIUM_MSVC_URL }}
           dltwice libsodium.tar.gz ${{ env.SODIUM_MINGW_URL }}
           echo '-- files ./cache_x86 --'
           ls -lagG ./
+          echo '/* flag?? */'
+          echo $flag
           flag=${flag//o/}
+          echo $flag
           echo "FLAG=$flag" >> $GITHUB_OUTPUT
 
       - name: delete repository cache
@@ -103,6 +105,7 @@ jobs:
             gh actions-cache list -R "${REPO}" |
             grep $key
           )
+          echo $cachekey
           if [ -n "$cacheky" ]; then
             echo "/* delete repository cache */"
             gh actions-cache delete "$key" -R "${REPO}" --confirm
