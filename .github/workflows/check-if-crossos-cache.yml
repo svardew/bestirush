@@ -64,6 +64,23 @@ jobs:
         run: |
           dir ${{ env.CACHEDIR }}
 
+      - name: delete cache from repo
+        shell: bash {0}
+        run: |
+          set +e
+          gh extension install actions/gh-actions-cache
+          key=Winnows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
+          cacheid=$(
+            gh-actions cache list -R "${REPO}" -B "${BRANCH}" |
+            grep $key |
+            cut -f1
+          )
+          echo $cacheid
+          gh actions-cache delete "$key" -R "${REPO}" -B "${BRANCH}" --confirm
+        env:
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.head_ref }}
+
       - name: save cache
         uses: actions/cache/save@v4
         with:
@@ -72,5 +89,5 @@ jobs:
           key: Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
 
       - name: noop
-        run: /bin/true
+        run: echo bye
 
