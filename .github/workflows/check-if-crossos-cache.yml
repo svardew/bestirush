@@ -58,6 +58,8 @@ jobs:
           key: Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
           restore-keys: |
             Windows-${{ env.ARCH }}-
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: check cache.
         id: checkcache
@@ -80,6 +82,7 @@ jobs:
         env:
           REPO: ${{ github.repository }}
           BRANCH: ${{ github.head_ref }}
+          GH_TOKEN: ${{ github.token }}
 
       - name: save cache
         uses: actions/cache/save@v4
@@ -87,6 +90,8 @@ jobs:
           enableCrossOsArchive: true
           path: ${{ env.CACHEDIR }}
           key: Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: noop
         run: echo bye
