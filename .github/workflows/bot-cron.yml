@@ -58,10 +58,13 @@ jobs:
       - name: restore cache ${{ env.ARCH }}
         uses: actions/cache/restore@v4
         with:
+          enableCrossOsArchive: true
           path: ${{ env.CACHEDIR }}
           key: Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
           restore-keys: |
             Windows-${{ env.ARCH }}-
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: check cache, download missing file
         id: checkcache
@@ -91,31 +94,31 @@ jobs:
       - name: delete repository cache
         id: deletecache
         if: ${{ contains(steps.checkcache.outputs.FLAG, 'x') }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           test -d ${{ env.CACHEDIR }} && rm -rf ${{ env.CACHEDIR }}
           mv cache_${{ env.ARCH }} ${{ env.CACHEDIR }}
           gh extension install actions/gh-actions-cache
           key=Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
-          id=$(
-            gh actions-cache list -R ${{ github.repository }} |
-            grep -E '^[0-9]\+\s\+'$key
-            cut -f1
+          cachekey=$(
+            gh actions-cache list -R "${REPO}" |
+            grep $key
           )
-          if [ -n "$id" ]; then
-            echo "/* delete repository cache [id:$id] */"
-            # gh actions-cache delete $key -R ${{ github.repository }} --confirm
-            gh actions-cache delete $key --confirm
+          if [ -n "$cacheky" ]; then
+            echo "/* delete repository cache */"
+            gh actions-cache delete "$key" -R "${REPO}" --confirm
           fi
           echo "FLAG=savecache" >> $GITHUB_OUTPUT
           echo '-- caches in this repo --'
           gh actions-cache list
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
 
       - name: save cache
         if: ${{ contains(steps.deletecache.outputs.FLAG, 'savecache') }}
         uses: actions/cache/save@v4
         with:
+          enableCrossOsArchive: true
           path: ${{ env.CACHEDIR }}
           key: Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
 
