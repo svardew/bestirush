@@ -72,14 +72,15 @@ jobs:
           set +e
           gh extension install actions/gh-actions-cache
           key=Windows-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
-          cacheid=$(
-            gh actions-cache list -R "${REPO}" |
-            grep $key
-            # grep $key |
-            # cut -f1
-          )
-          echo $cacheid
-          # gh actions-cache delete "$key" -R "${REPO}" -B "${BRANCH}" --confirm
+          #-- cacheid=$(
+          #--   gh actions-cache list -R "${REPO}" |
+          #--   grep $key
+          #--   # grep $key |
+          #--   # cut -f1
+          #-- )
+          # echo $cacheid
+          # ^^^ wrong output. missing ID...
+          gh actions-cache delete "$key" -R "${REPO}" --confirm
           # gh api --method DELETE -H "${H_ACC}" -H "${H_VER}" "repos/${REPO}/actions/caches/$cacheid"
         env:
           REPO: ${{ github.repository }}
