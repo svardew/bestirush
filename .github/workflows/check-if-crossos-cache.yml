@@ -79,7 +79,7 @@ jobs:
           )
           echo $cacheid
           # gh actions-cache delete "$key" -R "${REPO}" -B "${BRANCH}" --confirm
-          gh api --method DELETE -H "${H_ACC}" -H "${H_VER}" "/repos/${REPO}/actions/caches/$cacheid"
+          gh api --method DELETE -H "${H_ACC}" -H "${H_VER}" "repos/${REPO}/actions/caches/$cacheid"
         env:
           REPO: ${{ github.repository }}
           BRANCH: ${{ github.head_ref }}
