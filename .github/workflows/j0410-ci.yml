@@ -385,7 +385,7 @@ jobs:
         run: |
           make ${TEST} #//}}}
 
-  windows-cache:
+  windows-x64-cache:
     runs-on: windows-2022
 
     env:
@@ -408,17 +408,17 @@ jobs:
       SODIUM_MINGW_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-mingw.tar.gz
       SODIUM_MINGW_VER: 26
       # matrix
-      ARCH_64: x64
-      ARCH_32: x32
+      ARCH: x64
+      BITS: 64
 
     steps:
-      - name: start. run_id-${{ github.run_id }}
+      - name: run_id-${{ github.run_id }}
         run: exit 0
 
       - name: Checkout repository from github
         uses: actions/checkout@v4
         with:
-          repository:  ${{ github.repository_owner }}/vim
+          repository: ${{ github.repository_owner }}/vim
 
       - name: Create a list of download URLs
         shell: cmd
@@ -428,17 +428,17 @@ jobs:
           echo %WINPTY_URL%>> urls.txt
           echo %SODIUM_VER%>> urls.txt
 
-      - name: restore Cache ${{ env.ARCH_64 }}
+      - name: restore Cache
         uses: actions/cache/restore@v4
         with:
           path: downloads
-          key: ${{ runner.os }}-${{ env.ARCH_64 }}-${{ github.run_id }}
+          key: ${{ runner.os }}-${{ env.ARCH }}-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-${{ env.ARCH_64 }}-${{ hashFiles('urls.txt') }}
-            ${{ runner.os }}-${{ env.ARCH_64 }}-
+            ${{ runner.os }}-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
+            ${{ runner.os }}-${{ env.ARCH }}-
 
-      - name: check Cache ${{ env.ARCH_64 }}
-        id: checkcache_${{ env.ARCH_64 }}
+      - name: check Cache
+        id: checkcache
         shell: bash {0}
         run: |
           test -d downloads || mkdir downloads
@@ -450,8 +450,8 @@ jobs:
           test -f downloads/libsodium.tar.gz || flag=${flag}-libsodium.tar.gz
           echo "FLAG=${flag}" >> $GITHUB_OUTPUT
 
-      - name: Download dependencies ${{ env.ARCH_64 }}
-        if: ${{ contains(steps.checkcahe_${{ env.ARCH_64 }}.outputs.FLAG, '-') }}
+      - name: Download dependencies
+        if: ${{ contains(steps.checkcache.outputs.FLAG, '-') }}
         shell: cmd
         run: |
           path C:\Program Files\7-Zip;%path%
@@ -472,7 +472,7 @@ jobs:
           :downloadfile
           :: call :downloadfile <URL> <localfile>
           if exist %2 (
-            echo Skip Dowload. %2
+            echo Skip Download. %2
           )
           if not exist %2 (
             curl -f -L %1 -o %2
@@ -482,23 +482,131 @@ jobs:
             curl -f -L %1 -o %2 || exit 1
           )
           goto :eof
-        env:
-          BITS: 64
 
-      - name: save Cache ${{ env.ARCH_64 }}
-        if: ${{ contains(steps.checkcahe_${{ env.ARCH_64 }}.outputs.FLAG, '-') }}
+      - name: save Cache
+        if: ${{ contains(steps.checkcache.outputs.FLAG, '-') }}
         uses: actions/cache/save@v4
         with:
           path: downloads
-          key: ${{ runner.os }}-${{ env.ARCH_64 }}-${{ github.run_id }}
+          key: ${{ runner.os }}-${{ env.ARCH }}-${{ github.run_id }}
 
       - name: exit 1
         if: true
         run: exit 1
 
+  windows-x86-cache:
+    runs-on: windows-2022
+
+    env:
+      # Interfaces
+      # Lua
+      LUA_VER: 54
+      LUA_VER_DOT: '5.4'
+      LUA_RELEASE: 5.4.2
+      LUA32_URL: https://downloads.sourceforge.net/luabinaries/lua-%LUA_RELEASE%_Win32_dllw6_lib.zip
+      LUA64_URL: https://downloads.sourceforge.net/luabinaries/lua-%LUA_RELEASE%_Win64_dllw6_lib.zip
+      LUA_DIR: D:\Lua
+      # do not want \L to end up in pathdef.c and compiler complaining about unknown escape sequences \l
+      LUA_DIR_SLASH: D:/Lua
+      # winpty
+      WINPTY_URL: https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip
+      # libsodium
+      SODIUM_VER: '1.0.19'
+      SODIUM_MSVC_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-msvc.zip
+      SODIUM_MSVC_VER: v143
+      SODIUM_MINGW_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-mingw.tar.gz
+      SODIUM_MINGW_VER: 26
+      # matrix
+      ARCH: x86
+      BITS: 86
+
+    steps:
+      - name: run_id-${{ github.run_id }}
+        run: exit 0
+
+      - name: Checkout repository from github
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/vim
+
+      - name: Create a list of download URLs
+        shell: cmd
+        run: |
+          type NUL > urls.txt
+          echo %LUA_RELEASE%>> urls.txt
+          echo %WINPTY_URL%>> urls.txt
+          echo %SODIUM_VER%>> urls.txt
+
+      - name: restore Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: downloads
+          key: ${{ runner.os }}-${{ env.ARCH }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
+            ${{ runner.os }}-${{ env.ARCH }}-
+
+      - name: check Cache
+        id: checkcache
+        shell: bash {0}
+        run: |
+          test -d downloads || mkdir downloads
+          ls downloads
+          flag=''
+          test -f downloads/lua.zip || flag=${flag}-lua.zip
+          test -f downloads/winpty.zip || flag=${flag}-winpty.zip
+          test -f downloads/libsodium.zip || flag=${flag}-libsodium.zip
+          test -f downloads/libsodium.tar.gz || flag=${flag}-libsodium.tar.gz
+          echo "FLAG=${flag}" >> $GITHUB_OUTPUT
+
+      - name: Download dependencies
+        if: ${{ contains(steps.checkcache.outputs.FLAG, '-') }}
+        shell: cmd
+        run: |
+          path C:\Program Files\7-Zip;%path%
+          if not exist downloads mkdir downloads
+
+          echo %COL_GREEN%Download Lua%COL_RESET%
+          call :downloadfile %LUA${{ env.BITS }}_URL% downloads\lua.zip
+
+          echo %COL_GREEN%Download winpty%COL_RESET%
+          call :downloadfile %WINPTY_URL% downloads\winpty.zip
+
+          echo %COL_GREEN%Download libsodium%COL_RESET%
+          call :downloadfile %SODIUM_MSVC_URL% downloads\libsodium.zip
+          call :downloadfile %SODIUM_MINGW_URL% downloads\libsodium.tar.gz
+
+          goto :eof
+
+          :downloadfile
+          :: call :downloadfile <URL> <localfile>
+          if exist %2 (
+            echo Skip Download. %2
+          )
+          if not exist %2 (
+            curl -f -L %1 -o %2
+          )
+          if ERRORLEVEL 1 (
+            rem Retry once.
+            curl -f -L %1 -o %2 || exit 1
+          )
+          goto :eof
+
+      - name: save Cache
+        if: ${{ contains(steps.checkcache.outputs.FLAG, '-') }}
+        uses: actions/cache/save@v4
+        with:
+          path: downloads
+          key: ${{ runner.os }}-${{ env.ARCH }}-${{ github.run_id }}
+
+      - name: exit 1
+        if: true
+        run: exit 1
+
+
   windows:
     runs-on: windows-2022
-    needs: [windows-cache]
+    needs: [windows-x64-cache, windows-x86-cache]
 
     env:
       # Interfaces
