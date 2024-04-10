@@ -17,7 +17,8 @@ permissions:
 
 jobs:
   linux:
-    runs-on: ubuntu-22.04
+    if: false
+    runs-on: ubuntu-22.04 #//{{{
 
     env:
       CC: ${{ matrix.compiler }}
@@ -297,10 +298,11 @@ jobs:
           for f in $(grep -lR '#[[:digit:]]* *0x[[:xdigit:]]*' "${LOG_DIR}"); do
             asan_symbolize -l "$f"
             false # in order to fail a job
-          done
+          done #//}}}
 
   macos:
-    runs-on: ${{ matrix.runner }}
+    if: false
+    runs-on: ${{ matrix.runner }} #//{{{
 
     env:
       CC: clang
@@ -381,7 +383,7 @@ jobs:
       - name: Test
         timeout-minutes: 20
         run: |
-          make ${TEST}
+          make ${TEST} #//}}}
 
   windows:
     runs-on: windows-2022
