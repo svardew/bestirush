@@ -1,5 +1,4 @@
 name: learn github workflow
-description: playgrouund 10001
 
 on:
   # pull_request:
@@ -15,6 +14,7 @@ permissions:
 
 jobs:
   run_id_is_nani:
+    runs-on: ubuntu-22.04
     steps:
       - run: echo ${{ github.run_id }}
       - run: echo ${{ github.sha }}
