@@ -1,0 +1,22 @@
+name: learn github workflow
+description: playgrouund 10001
+
+on:
+  # pull_request:
+  workflow_dispatch
+
+# Cancels all previous workflow runs for pull requests that have not completed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  run_id_is_nani:
+    steps:
+      - run: echo ${{ github.run_id }}
+      - run: echo ${{ github.sha }}
+
+
