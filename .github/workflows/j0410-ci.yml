@@ -438,12 +438,20 @@ jobs:
             ${{ runner.os }}-${{ env.ARCH_64 }}-
 
       - name: check Cache ${{ env.ARCH_64 }}
+        id: checkcache_${{ env.ARCH_64 }}
         shell: bash {0}
         run: |
           test -d downloads || mkdir downloads
           ls downloads
+          flag=''
+          test -f downloads/lua.zip || flag=${flag}-lua.zip
+          test -f downloads/winpty.zip || flag=${flag}-winpty.zip
+          test -f downloads/libsodium.zip || flag=${flag}-libsodium.zip
+          test -f downloads/libsodium.tar.gz || flag=${flag}-libsodium.tar.gz
+          echo "FLAG=${flag}" >> $GITHUB_OUTPUT
 
       - name: Download dependencies ${{ env.ARCH_64 }}
+        if: ${{ contains(steps.checkcahe_${{ env.ARCH_64 }}.outputs.FLAG, '-') }}
         shell: cmd
         run: |
           path C:\Program Files\7-Zip;%path%
@@ -478,6 +486,7 @@ jobs:
           BITS: 64
 
       - name: save Cache ${{ env.ARCH_64 }}
+        if: ${{ contains(steps.checkcahe_${{ env.ARCH_64 }}.outputs.FLAG, '-') }}
         uses: actions/cache/save@v4
         with:
           path: downloads
