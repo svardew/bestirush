@@ -518,7 +518,7 @@ jobs:
       SODIUM_MINGW_VER: 26
       # matrix
       ARCH: x86
-      BITS: 86
+      BITS: 32
 
     steps:
       - name: run_id-${{ github.run_id }}
