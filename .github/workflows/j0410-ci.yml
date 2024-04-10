@@ -412,6 +412,9 @@ jobs:
       ARCH_32: x32
 
     steps:
+      - name: start. run_id-${{ github.run_id }}
+        run: exit 0
+
       - name: Checkout repository from github
         uses: actions/checkout@v4
         with:
