@@ -385,8 +385,50 @@ jobs:
         run: |
           make ${TEST} #//}}}
 
+  windows-cache:
+    runs-on: windows-2022
+
+    env:
+      # Interfaces
+      # Lua
+      LUA_VER: 54
+      LUA_VER_DOT: '5.4'
+      LUA_RELEASE: 5.4.2
+      LUA32_URL: https://downloads.sourceforge.net/luabinaries/lua-%LUA_RELEASE%_Win32_dllw6_lib.zip
+      LUA64_URL: https://downloads.sourceforge.net/luabinaries/lua-%LUA_RELEASE%_Win64_dllw6_lib.zip
+      LUA_DIR: D:\Lua
+      # do not want \L to end up in pathdef.c and compiler complaining about unknown escape sequences \l
+      LUA_DIR_SLASH: D:/Lua
+      # winpty
+      WINPTY_URL: https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip
+      # libsodium
+      SODIUM_VER: '1.0.19'
+      SODIUM_MSVC_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-msvc.zip
+      SODIUM_MSVC_VER: v143
+      SODIUM_MINGW_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-mingw.tar.gz
+      SODIUM_MINGW_VER: 26
+
+    steps:
+      - name: Checkout repository from github
+        uses: actions/checkout@v4
+        with:
+          repository:  ${{ github.repository_owner }}/vim
+
+      - name: Create a list of download URLs
+        shell: cmd
+        run: |
+          type NUL > urls.txt
+          echo %LUA_RELEASE%>> urls.txt
+          echo %WINPTY_URL%>> urls.txt
+          echo %SODIUM_VER%>> urls.txt
+
+      - name: exit 1
+        if: true
+        run: exit 1
+
   windows:
     runs-on: windows-2022
+    needs: [windows-cache]
 
     env:
       # Interfaces
