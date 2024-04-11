@@ -730,10 +730,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: downloads
-          key: ${{ runner.os }}-${{ env.ARCH }}-${{ github.run_id }}
+          key: ${{ runner.os }}-${{ matrix.arch }}-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-${{ env.ARCH }}-${{ hashFiles('urls.txt') }}
-            ${{ runner.os }}-${{ env.ARCH }}-
+            ${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('urls.txt') }}
+            ${{ runner.os }}-${{ matrix.arch }}-
 
       - name: Download dependencies
         shell: cmd
