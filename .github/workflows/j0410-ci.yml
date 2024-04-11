@@ -491,7 +491,7 @@ jobs:
           key: ${{ runner.os }}-${{ env.ARCH }}-${{ github.run_id }}
 
       - name: exit 1
-        if: true
+        if: false
         run: exit 1
 
   windows-x86-cache:
@@ -600,7 +600,7 @@ jobs:
           key: ${{ runner.os }}-${{ env.ARCH }}-${{ github.run_id }}
 
       - name: exit 1
-        if: true
+        if: false
         run: exit 1
 
 
