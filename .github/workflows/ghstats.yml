@@ -32,6 +32,7 @@ jobs:
       - name: ruby
         run: ruby -v
       - name: empty file
+        shell: cmd
         run: type NUL> zero.txt
       - name: md5sum
         run: |
