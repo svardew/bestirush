@@ -485,7 +485,6 @@ jobs:
           goto :eof
 
       - name: Save cache ${{ matrix.arch }}
-        if: false
         uses: actions/cache/save@v4
         with:
           path: downloads
