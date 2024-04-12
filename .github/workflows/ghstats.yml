@@ -26,5 +26,11 @@ jobs:
         run: date +%Y
       - name: bye
         run: echo bye
+  hello-mswin:
+    runs-on: windows-2022
+    steps:
+      - name: ruby
+        run: ruby -v
+
 
 
