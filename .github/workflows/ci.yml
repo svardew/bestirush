@@ -499,6 +499,9 @@ jobs:
 
       - name: Checkout repository from github
         uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/vim
+          ref: aa8e22b035dd669cb47c9237f9c9a917ec6a0ec4 # patch 9.1.0300
 
       - name: Create a list of download URLs
         shell: cmd
@@ -509,7 +512,7 @@ jobs:
           echo %SODIUM_VER%>> urls.txt
 
       - name: Cache downloaded files
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: downloads
           key: ${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('urls.txt') }}
@@ -683,7 +686,7 @@ jobs:
           )
 
       - name: Generate gcov files
-        if: matrix.coverage
+        if: matrix.coverage && false
         shell: msys2 {0}
         run: |
           cd src
@@ -691,7 +694,7 @@ jobs:
 
       - name: Codecov
         timeout-minutes: 20
-        if: matrix.coverage
+        if: matrix.coverage && false
         uses: codecov/codecov-action@v4
         with:
           directory: src
