@@ -389,8 +389,111 @@ jobs:
       #}}}
       #wip-windows
 
+  windows-cache:
+    runs-on: windows-2022
+
+    env:
+      # Lua
+      LUA_VER: 54
+      LUA_VER_DOT: '5.4'
+      LUA_RELEASE: 5.4.2
+      LUA32_URL: https://downloads.sourceforge.net/luabinaries/lua-%LUA_RELEASE%_Win32_dllw6_lib.zip
+      LUA64_URL: https://downloads.sourceforge.net/luabinaries/lua-%LUA_RELEASE%_Win64_dllw6_lib.zip
+      # winpty
+      WINPTY_URL: https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip
+      # libsodium
+      SODIUM_VER: '1.0.19'
+      SODIUM_MSVC_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-msvc.zip
+      SODIUM_MSVC_VER: v143
+      SODIUM_MINGW_URL: https://download.libsodium.org/libsodium/releases/libsodium-%SODIUM_VER%-stable-mingw.tar.gz
+      SODIUM_MINGW_VER: 26
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x64, BITS: 64 }
+          - { arch: x86, BITS: 32 }
+
+    steps:
+      - name: Initialize. run_id ${{ github.run_id }}
+        id: init
+        shell: bash
+        run: |
+          # Show Windows version
+          cmd /c ver
+          git config --global core.autocrlf input
+
+      - name: Create a list of download URLs
+        shell: cmd
+        run: |
+          type NUL > urls.txt
+          echo %LUA_RELEASE%>> urls.txt
+          echo %WINPTY_URL%>> urls.txt
+          echo %SODIUM_VER%>> urls.txt
+
+      - name: Restore cache
+        id: restorecache
+        uses: actions/cache/restore@v4
+        with:
+          path: downloads
+          key: ${{ runner.os }}-${{ matrix.arch }}-runid${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-runid
+            ${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('urls.txt') }}
+
+      - name: show cache key
+        run: |
+          echo show cache-hit, cache-primary-key, cache-matched-key
+          echo ${{ steps.restorecache.outputs.cache-hit }}
+          echo ${{ steps.restorecache.outputs.cache-primary-key }}
+          echo ${{ steps.restorecache.outputs.cache-matched-key }}
+
+      - name: Download dependencies
+        shell: cmd
+        run: |
+          path C:\Program Files\7-Zip;%path%
+          if not exist downloads mkdir downloads
+
+          echo %COL_GREEN%Download Lua%COL_RESET%
+          call :downloadfile %LUA${{ env.BITS }}_URL% downloads\lua.zip
+
+          echo %COL_GREEN%Download winpty%COL_RESET%
+          call :downloadfile %WINPTY_URL% downloads\winpty.zip
+
+          echo %COL_GREEN%Download libsodium%COL_RESET%
+          call :downloadfile %SODIUM_MSVC_URL% downloads\libsodium.zip
+          call :downloadfile %SODIUM_MINGW_URL% downloads\libsodium.tar.gz
+
+          goto :eof
+
+          :downloadfile
+          :: call :downloadfile <URL> <localfile>
+          if exist %2 (
+            echo Skip Download, file exist ...  %2
+          )
+          if not exist %2 (
+            curl -f -L %1 -o %2
+          )
+          if ERRORLEVEL 1 (
+            rem Retry once.
+            curl -f -L %1 -o %2 || exit 1
+          )
+          goto :eof
+
+      - name: Save cache ${{ matrix.arch }}
+        if: false
+        uses: actions/cache/save@v4
+        with:
+          path: downloads
+          key: ${{ runner.os }}-${{ matrix.arch }}-runid${{ github.run_id }}
+
+      - name: always fail
+        run: exit 1
+
   windows:
     runs-on: windows-2022
+    needs: [windows-cache]
 
     env:
       # Interfaces
