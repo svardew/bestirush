@@ -443,6 +443,7 @@ jobs:
             ${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('urls.txt') }}
 
       - name: show cache key
+        shell: bash {0}
         run: |
           echo show cache-hit, cache-primary-key, cache-matched-key
           echo ${{ steps.restorecache.outputs.cache-hit }}
